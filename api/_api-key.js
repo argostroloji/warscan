@@ -9,6 +9,7 @@ const BROWSER_ORIGIN_PATTERNS = [
   /^https:\/\/(.*\.)?worldmonitor\.app$/,
   /^https:\/\/(.*\.)?warscan\.app$/,
   /^https:\/\/(.*\.)?warscan\.app$/,
+  /^https:\/\/(.*\.)?warscan\.space$/,
   /^https:\/\/.*\.vercel\.app$/,
   ...(process.env.NODE_ENV === 'production' ? [] : [
     /^https?:\/\/localhost(:\d+)?$/,
