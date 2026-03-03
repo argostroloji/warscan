@@ -609,6 +609,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,ico,png,svg,woff2}'],
         globIgnores: ['**/ml*.js', '**/onnx*.wasm', '**/locale-*.js'],
+        maximumFileSizeToCacheInBytes: 5000000,
         navigateFallback: null,
         skipWaiting: true,
         clientsClaim: true,
