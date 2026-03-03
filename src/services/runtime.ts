@@ -388,16 +388,6 @@ export function installRuntimeFetchPatch(): void {
   (window as unknown as Record<string, unknown>).__wmFetchPatched = true;
 }
 
-const ALLOWED_REDIRECT_HOSTS = /^https:\/\/([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)*worldmonitor\.app(:\d+)?$/;
-
-function isAllowedRedirectTarget(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return ALLOWED_REDIRECT_HOSTS.test(parsed.origin) || parsed.hostname === 'localhost';
-  } catch {
-    return false;
-  }
-}
 
 export function installWebApiRedirect(): void {
   // Legacy client-side redirect removed as it triggers CORS blocks on Vercel.
