@@ -108,7 +108,13 @@ export default async function handler(req) {
       try {
         const url = new URL(req.url);
         const remoteUrl = `${relayUrl}${url.pathname}${url.search}`;
-        const resp = await fetch(remoteUrl, { headers: { ...cors } });
+        // Spoof origin/referer for same-origin trust on remote
+        const headers = {
+          ...cors,
+          'Origin': 'https://worldmonitor.app',
+          'Referer': 'https://worldmonitor.app/'
+        };
+        const resp = await fetch(remoteUrl, { headers });
         if (resp.ok) return resp;
       } catch { /* fallback to empty */ }
     }
