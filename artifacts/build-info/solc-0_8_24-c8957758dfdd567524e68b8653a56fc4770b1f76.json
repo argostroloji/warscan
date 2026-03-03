@@ -1,0 +1,35 @@
+{
+  "_format": "hh3-sol-build-info-1",
+  "id": "solc-0_8_24-c8957758dfdd567524e68b8653a56fc4770b1f76",
+  "solcVersion": "0.8.24",
+  "solcLongVersion": "0.8.24+commit.e11b9ed9",
+  "userSourceNameMap": {
+    "contracts/WarScanBountyEscrow.sol": "project/contracts/WarScanBountyEscrow.sol"
+  },
+  "input": {
+    "language": "Solidity",
+    "settings": {
+      "evmVersion": "shanghai",
+      "outputSelection": {
+        "*": {
+          "": [
+            "ast"
+          ],
+          "*": [
+            "abi",
+            "evm.bytecode",
+            "evm.deployedBytecode",
+            "evm.methodIdentifiers",
+            "metadata"
+          ]
+        }
+      },
+      "remappings": []
+    },
+    "sources": {
+      "project/contracts/WarScanBountyEscrow.sol": {
+        "content": "// SPDX-License-Identifier: MIT\r\npragma solidity ^0.8.24;\r\n\r\ninterface IERC20 {\r\n    function transfer(address to, uint256 amount) external returns (bool);\r\n    function transferFrom(address from, address to, uint256 amount) external returns (bool);\r\n    function balanceOf(address account) external view returns (uint256);\r\n}\r\n\r\n/**\r\n * @title WarScanBountyEscrow\r\n * @dev Escrow system for Web3 Intelligence Bounties using WARSCAN ERC-20 tokens.\r\n */\r\ncontract WarScanBountyEscrow {\r\n    \r\n    IERC20 public immutable warscanToken;\r\n    \r\n    // Max bounty limit in token units (e.g., 10,000 tokens)\r\n    uint256 public constant MAX_BOUNTY_REWARD = 10000 * 10**18; \r\n\r\n    struct Bounty {\r\n        address creator;\r\n        string objective;\r\n        uint256 reward;\r\n        bool isActive;\r\n    }\r\n\r\n    // bountyId => Bounty\r\n    mapping(uint256 => Bounty) public bounties;\r\n    uint256 public nextBountyId;\r\n\r\n    event BountyCreated(uint256 indexed bountyId, address indexed creator, string objective, uint256 reward);\r\n    event WorkSubmitted(uint256 indexed bountyId, string proofUri);\r\n    event WorkApproved(uint256 indexed bountyId, address indexed winner, uint256 reward);\r\n    event BountyRefunded(uint256 indexed bountyId, address indexed creator);\r\n\r\n    constructor(address _tokenAddress) {\r\n        require(_tokenAddress != address(0), \"Invalid token address\");\r\n        warscanToken = IERC20(_tokenAddress);\r\n    }\r\n\r\n    /**\r\n     * @dev Places a new intelligence bounty and locks the WARSCAN tokens.\r\n     * @param _objective The description of what needs to be researched/analyzed.\r\n     * @param _reward The amount of tokens to lock for this bounty.\r\n     */\r\n    function createBounty(string memory _objective, uint256 _reward) external returns (uint256) {\r\n        require(_reward > 0, \"Reward must be greater than 0\");\r\n        require(_reward <= MAX_BOUNTY_REWARD, \"Exceeds max test limit\");\r\n\r\n        // Transfer tokens from creator to this contract\r\n        bool success = warscanToken.transferFrom(msg.sender, address(this), _reward);\r\n        require(success, \"Token transfer failed. Did you approve?\");\r\n\r\n        uint256 bountyId = nextBountyId++;\r\n        \r\n        bounties[bountyId] = Bounty({\r\n            creator: msg.sender,\r\n            objective: _objective,\r\n            reward: _reward,\r\n            isActive: true\r\n        });\r\n\r\n        emit BountyCreated(bountyId, msg.sender, _objective, _reward);\r\n\r\n        return bountyId;\r\n    }\r\n\r\n    /**\r\n     * @dev Agents call this to submit their proof of work.\r\n     */\r\n    function submitWork(uint256 _bountyId, string memory _proofUri) external {\r\n        require(bounties[_bountyId].isActive, \"Bounty is not active\");\r\n        emit WorkSubmitted(_bountyId, _proofUri);\r\n    }\r\n\r\n    /**\r\n     * @dev Creator approves the submitted work and pays out the winner in tokens.\r\n     */\r\n    function approveWork(uint256 _bountyId, address _winner) external {\r\n        Bounty storage bounty = bounties[_bountyId];\r\n        \r\n        require(bounty.isActive, \"Bounty is not active\");\r\n        require(msg.sender == bounty.creator, \"Only creator can approve\");\r\n        require(_winner != address(0), \"Invalid winner address\");\r\n\r\n        bounty.isActive = false;\r\n        \r\n        uint256 payout = bounty.reward;\r\n        bounty.reward = 0;\r\n\r\n        bool success = warscanToken.transfer(_winner, payout);\r\n        require(success, \"Payout transfer failed\");\r\n\r\n        emit WorkApproved(_bountyId, _winner, payout);\r\n    }\r\n\r\n    /**\r\n     * @dev Creator reclaims tokens if no adequate work was submitted.\r\n     */\r\n    function refundBounty(uint256 _bountyId) external {\r\n        Bounty storage bounty = bounties[_bountyId];\r\n        \r\n        require(bounty.isActive, \"Bounty is not active\");\r\n        require(msg.sender == bounty.creator, \"Only creator can refund\");\r\n\r\n        bounty.isActive = false;\r\n        \r\n        uint256 refundAmount = bounty.reward;\r\n        bounty.reward = 0;\r\n\r\n        bool success = warscanToken.transfer(bounty.creator, refundAmount);\r\n        require(success, \"Refund transfer failed\");\r\n\r\n        emit BountyRefunded(_bountyId, bounty.creator);\r\n    }\r\n}\r\n"
+      }
+    }
+  }
+}

@@ -1,0 +1,46 @@
+{
+    "success": true,
+    "bounties": [
+        {
+            "id": "bty-881",
+            "lat": 46.48,
+            "lng": 30.72,
+            "locationName": "Odesa Port Operations",
+            "description": "Analyze satellite imagery and AIS data to determine current operational capacity and vessel queues at Odesa port facilities.",
+            "rewardValue": 0.05,
+            "rewardToken": "ETH",
+            "status": "open",
+            "createdAt": "2026-03-03T23:27:30.000Z"
+        },
+        {
+            "id": "bty-882",
+            "lat": 31.52,
+            "lng": 34.45,
+            "locationName": "Gaza Telecoms Infrastructure",
+            "description": "Assess internet connectivity and cell tower uptime in the Gaza strip using BGP routing data.",
+            "rewardValue": 0.1,
+            "rewardToken": "ETH",
+            "status": "claimed",
+            "agentName": "Agent_Sentinel",
+            "createdAt": "2026-03-03T21:57:30.000Z"
+        },
+        {
+            "id": "bty-883",
+            "lat": 12.55,
+            "lng": 43.25,
+            "locationName": "Bab el-Mandeb Strait",
+            "description": "Identify any military vessel escorts accompanying commercial tankers through the strait over the past 24 hours.",
+            "rewardValue": 0.08,
+            "rewardToken": "ETH",
+            "status": "completed",
+            "agentName": "Agent_MaritimeX",
+            "createdAt": "2026-03-01T00:00:00.000Z",
+            "completedAt": "2026-03-03T22:57:30.000Z"
+        }
+    ],
+    "contract": {
+        "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+        "network": "Base Sepolia (Testnet)",
+        "abiUrl": "/contracts/WarScanBountyEscrow.json"
+    }
+}

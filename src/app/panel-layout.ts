@@ -5,52 +5,40 @@ import {
   MapContainer,
   NewsPanel,
   MarketPanel,
-  HeatmapPanel,
-  CommoditiesPanel,
-  CryptoPanel,
-  PredictionPanel,
+  ClawnchPanel,
   MonitorPanel,
-  EconomicPanel,
   GdeltIntelPanel,
   LiveNewsPanel,
-  LiveWebcamsPanel,
   CIIPanel,
   CascadePanel,
   StrategicRiskPanel,
   StrategicPosturePanel,
-  TechEventsPanel,
-  ServiceStatusPanel,
   RuntimeConfigPanel,
   InsightsPanel,
-  TechReadinessPanel,
-  MacroSignalsPanel,
-  ETFFlowsPanel,
-  StablecoinPanel,
   UcdpEventsPanel,
   DisplacementPanel,
   ClimateAnomalyPanel,
   PopulationExposurePanel,
-  InvestmentsPanel,
-  TradePolicyPanel,
-  SupplyChainPanel,
   SecurityAdvisoriesPanel,
   OrefSirensPanel,
   TelegramIntelPanel,
-  GulfEconomiesPanel,
   WorldClockPanel,
+  BountyPanel,
+  BankrWidget,
 } from '@/components';
 import { SatelliteFiresPanel } from '@/components/SatelliteFiresPanel';
-import { PositiveNewsFeedPanel } from '@/components/PositiveNewsFeedPanel';
-import { CountersPanel } from '@/components/CountersPanel';
-import { ProgressChartsPanel } from '@/components/ProgressChartsPanel';
-import { BreakthroughsTickerPanel } from '@/components/BreakthroughsTickerPanel';
-import { HeroSpotlightPanel } from '@/components/HeroSpotlightPanel';
-import { GoodThingsDigestPanel } from '@/components/GoodThingsDigestPanel';
-import { SpeciesComebackPanel } from '@/components/SpeciesComebackPanel';
-import { RenewableEnergyPanel } from '@/components/RenewableEnergyPanel';
-import { GivingPanel } from '@/components';
-import { focusInvestmentOnMap } from '@/services/investments-focus';
 import { debounce, saveToStorage } from '@/utils';
+import { BrowserProvider, Contract, parseEther } from 'ethers';
+import EscrowArtifact from '@/contracts/WarScanBountyEscrow.json';
+
+const ESCROW_ADDRESS = "0x8888888888888888888888888888888888888888"; // Replace with deployed Base Sepolia address
+const WARSCAN_TOKEN_ADDRESS = "0x9999999999999999999999999999999999999999"; // Placeholder for WARSCAN token
+
+const ERC20_ABI = [
+  "function approve(address spender, uint256 amount) public returns (bool)",
+  "function allowance(address owner, address spender) public view returns (uint256)",
+  "function balanceOf(address account) public view returns (uint256)"
+];
 import { escapeHtml } from '@/utils/sanitize';
 import {
   FEEDS,
@@ -99,15 +87,6 @@ export class PanelLayoutManager implements AppModule {
       this.criticalBannerEl = null;
     }
     // Clean up happy variant panels
-    this.ctx.tvMode?.destroy();
-    this.ctx.tvMode = null;
-    this.ctx.countersPanel?.destroy();
-    this.ctx.progressPanel?.destroy();
-    this.ctx.breakthroughsPanel?.destroy();
-    this.ctx.heroPanel?.destroy();
-    this.ctx.digestPanel?.destroy();
-    this.ctx.speciesPanel?.destroy();
-    this.ctx.renewablePanel?.destroy();
 
     window.removeEventListener('resize', this.ensureCorrectZones);
   }
@@ -116,52 +95,11 @@ export class PanelLayoutManager implements AppModule {
     this.ctx.container.innerHTML = `
       <div class="header">
         <div class="header-left">
-          <div class="variant-switcher">${(() => {
-        const local = this.ctx.isDesktopApp || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-        const vHref = (v: string, prod: string) => local || SITE_VARIANT === v ? '#' : prod;
-        const vTarget = (_v: string) => '';
-        return `
-            <a href="${vHref('full', 'https://worldmonitor.app')}"
-               class="variant-option ${SITE_VARIANT === 'full' ? 'active' : ''}"
-               data-variant="full"
-               ${vTarget('full')}
-               title="${t('header.world')}${SITE_VARIANT === 'full' ? ` ${t('common.currentVariant')}` : ''}">
-              <span class="variant-icon">🌍</span>
-              <span class="variant-label">${t('header.world')}</span>
-            </a>
-            <span class="variant-divider"></span>
-            <a href="${vHref('tech', 'https://tech.worldmonitor.app')}"
-               class="variant-option ${SITE_VARIANT === 'tech' ? 'active' : ''}"
-               data-variant="tech"
-               ${vTarget('tech')}
-               title="${t('header.tech')}${SITE_VARIANT === 'tech' ? ` ${t('common.currentVariant')}` : ''}">
-              <span class="variant-icon">💻</span>
-              <span class="variant-label">${t('header.tech')}</span>
-            </a>
-            <span class="variant-divider"></span>
-            <a href="${vHref('finance', 'https://finance.worldmonitor.app')}"
-               class="variant-option ${SITE_VARIANT === 'finance' ? 'active' : ''}"
-               data-variant="finance"
-               ${vTarget('finance')}
-               title="${t('header.finance')}${SITE_VARIANT === 'finance' ? ` ${t('common.currentVariant')}` : ''}">
-              <span class="variant-icon">📈</span>
-              <span class="variant-label">${t('header.finance')}</span>
-            </a>
-            ${SITE_VARIANT === 'happy' ? `<span class="variant-divider"></span>
-            <a href="${vHref('happy', 'https://happy.worldmonitor.app')}"
-               class="variant-option active"
-               data-variant="happy"
-               ${vTarget('happy')}
-               title="Good News ${t('common.currentVariant')}">
-              <span class="variant-icon">☀️</span>
-              <span class="variant-label">Good News</span>
-            </a>` : ''}`;
-      })()}</div>
-          <span class="logo">MONITOR</span><span class="version">v${__APP_VERSION__}</span>${BETA_MODE ? '<span class="beta-badge">BETA</span>' : ''}
-          <a href="https://x.com/eliehabib" target="_blank" rel="noopener" class="credit-link">
-            <svg class="x-logo" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-            <span class="credit-text">@eliehabib</span>
-          </a>
+          <img src="/logo.jpg" class="header-logo" alt="WARSCAN">
+          <span class="version">v${__APP_VERSION__}</span>${BETA_MODE ? '<span class="beta-badge">BETA</span>' : ''}
+          <div id="web3-wallet-container" class="web3-wallet-container">
+            <button id="connect-wallet-btn" class="cyber-btn">Connect Wallet</button>
+          </div>
           <a href="https://github.com/koala73/worldmonitor" target="_blank" rel="noopener" class="github-link" title="${t('header.viewOnGitHub')}">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
           </a>
@@ -169,6 +107,13 @@ export class PanelLayoutManager implements AppModule {
             <span class="status-dot"></span>
             <span>${t('header.live')}</span>
           </div>
+          <a href="/skill.md" target="_blank" class="agent-api-link cyber-text" style="margin-left: 12px; font-size: 0.8em; text-decoration: none; border: 1px solid rgba(255, 0, 0, 0.3); padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>
+            FOR AGENTS / API
+          </a>
+          <button id="bounties-toggle-btn" class="cyber-btn" title="Toggle Bounty Board" style="margin-left: 8px; font-size: 0.75em; border: 1px solid var(--accent); color: var(--accent); background: rgba(255, 0, 102, 0.1);">
+            🎯 BOUNTIES
+          </button>
           <div class="region-selector">
             <select id="regionSelect" class="region-select">
               <option value="global">${t('components.deckgl.views.global')}</option>
@@ -314,7 +259,6 @@ export class PanelLayoutManager implements AppModule {
     `;
 
     this.criticalBannerEl.querySelector('.banner-view')?.addEventListener('click', () => {
-      console.log('[Banner] View Region clicked:', top.theaterId, 'lat:', top.centerLat, 'lon:', top.centerLon);
       trackCriticalBannerAction('view', top.theaterId);
       if (typeof top.centerLat === 'number' && typeof top.centerLon === 'number') {
         this.ctx.map?.setCenter(top.centerLat, top.centerLon, 4);
@@ -375,8 +319,6 @@ export class PanelLayoutManager implements AppModule {
     this.ctx.newsPanels['finance'] = financePanel;
     this.ctx.panels['finance'] = financePanel;
 
-    const heatmapPanel = new HeatmapPanel();
-    this.ctx.panels['heatmap'] = heatmapPanel;
 
     const marketsPanel = new MarketPanel();
     this.ctx.panels['markets'] = marketsPanel;
@@ -389,11 +331,12 @@ export class PanelLayoutManager implements AppModule {
       this.callbacks.updateMonitorResults();
     });
 
-    const commoditiesPanel = new CommoditiesPanel();
-    this.ctx.panels['commodities'] = commoditiesPanel;
 
-    const predictionPanel = new PredictionPanel();
-    this.ctx.panels['polymarket'] = predictionPanel;
+    const clawnchPanel = new ClawnchPanel();
+    this.ctx.panels['clawnch'] = clawnchPanel;
+
+    const bountyPanel = new BountyPanel('bounties');
+    this.ctx.panels['bounties'] = bountyPanel;
 
     const govPanel = new NewsPanel('gov', t('panels.gov'));
     this.attachRelatedAssetHandlers(govPanel);
@@ -405,8 +348,6 @@ export class PanelLayoutManager implements AppModule {
     this.ctx.newsPanels['intel'] = intelPanel;
     this.ctx.panels['intel'] = intelPanel;
 
-    const cryptoPanel = new CryptoPanel();
-    this.ctx.panels['crypto'] = cryptoPanel;
 
     const middleeastPanel = new NewsPanel('middleeast', t('panels.middleeast'));
     this.attachRelatedAssetHandlers(middleeastPanel);
@@ -498,16 +439,6 @@ export class PanelLayoutManager implements AppModule {
     this.ctx.newsPanels['thinktanks'] = thinktanksPanel;
     this.ctx.panels['thinktanks'] = thinktanksPanel;
 
-    const economicPanel = new EconomicPanel();
-    this.ctx.panels['economic'] = economicPanel;
-
-    if (SITE_VARIANT === 'full' || SITE_VARIANT === 'finance') {
-      const tradePolicyPanel = new TradePolicyPanel();
-      this.ctx.panels['trade-policy'] = tradePolicyPanel;
-
-      const supplyChainPanel = new SupplyChainPanel();
-      this.ctx.panels['supply-chain'] = supplyChainPanel;
-    }
 
     const africaPanel = new NewsPanel('africa', t('panels.africa'));
     this.attachRelatedAssetHandlers(africaPanel);
@@ -584,7 +515,6 @@ export class PanelLayoutManager implements AppModule {
 
       const strategicPosturePanel = new StrategicPosturePanel(() => this.ctx.allNews);
       strategicPosturePanel.setLocationClickHandler((lat, lon) => {
-        console.log('[App] StrategicPosture handler called:', { lat, lon, hasMap: !!this.ctx.map });
         this.ctx.map?.setCenter(lat, lon, 4);
       });
       this.ctx.panels['strategic-posture'] = strategicPosturePanel;
@@ -623,42 +553,11 @@ export class PanelLayoutManager implements AppModule {
       this.ctx.panels['telegram-intel'] = telegramIntelPanel;
     }
 
-    if (SITE_VARIANT === 'finance') {
-      const investmentsPanel = new InvestmentsPanel((inv) => {
-        focusInvestmentOnMap(this.ctx.map, this.ctx.mapLayers, inv.lat, inv.lon);
-      });
-      this.ctx.panels['gcc-investments'] = investmentsPanel;
-
-      const gulfEconomiesPanel = new GulfEconomiesPanel();
-      this.ctx.panels['gulf-economies'] = gulfEconomiesPanel;
-    }
 
     this.ctx.panels['world-clock'] = new WorldClockPanel();
 
-    if (SITE_VARIANT !== 'happy') {
-      if (!this.ctx.panels['gulf-economies']) {
-        const gulfEconomiesPanel = new GulfEconomiesPanel();
-        this.ctx.panels['gulf-economies'] = gulfEconomiesPanel;
-      }
-
-      const liveNewsPanel = new LiveNewsPanel();
-      this.ctx.panels['live-news'] = liveNewsPanel;
-
-      const liveWebcamsPanel = new LiveWebcamsPanel();
-      this.ctx.panels['live-webcams'] = liveWebcamsPanel;
-
-      this.ctx.panels['events'] = new TechEventsPanel('events', () => this.ctx.allNews);
-
-      const serviceStatusPanel = new ServiceStatusPanel();
-      this.ctx.panels['service-status'] = serviceStatusPanel;
-
-      const techReadinessPanel = new TechReadinessPanel();
-      this.ctx.panels['tech-readiness'] = techReadinessPanel;
-
-      this.ctx.panels['macro-signals'] = new MacroSignalsPanel();
-      this.ctx.panels['etf-flows'] = new ETFFlowsPanel();
-      this.ctx.panels['stablecoins'] = new StablecoinPanel();
-    }
+    const liveNewsPanel = new LiveNewsPanel();
+    this.ctx.panels['live-news'] = liveNewsPanel;
 
     if (this.ctx.isDesktopApp) {
       const runtimeConfigPanel = new RuntimeConfigPanel({ mode: 'alert' });
@@ -668,40 +567,7 @@ export class PanelLayoutManager implements AppModule {
     const insightsPanel = new InsightsPanel();
     this.ctx.panels['insights'] = insightsPanel;
 
-    // Global Giving panel (all variants)
-    this.ctx.panels['giving'] = new GivingPanel();
 
-    // Happy variant panels
-    if (SITE_VARIANT === 'happy') {
-      this.ctx.positivePanel = new PositiveNewsFeedPanel();
-      this.ctx.panels['positive-feed'] = this.ctx.positivePanel;
-
-      this.ctx.countersPanel = new CountersPanel();
-      this.ctx.panels['counters'] = this.ctx.countersPanel;
-      this.ctx.countersPanel.startTicking();
-
-      this.ctx.progressPanel = new ProgressChartsPanel();
-      this.ctx.panels['progress'] = this.ctx.progressPanel;
-
-      this.ctx.breakthroughsPanel = new BreakthroughsTickerPanel();
-      this.ctx.panels['breakthroughs'] = this.ctx.breakthroughsPanel;
-
-      this.ctx.heroPanel = new HeroSpotlightPanel();
-      this.ctx.panels['spotlight'] = this.ctx.heroPanel;
-      this.ctx.heroPanel.onLocationRequest = (lat: number, lon: number) => {
-        this.ctx.map?.setCenter(lat, lon, 4);
-        this.ctx.map?.flashLocation(lat, lon, 3000);
-      };
-
-      this.ctx.digestPanel = new GoodThingsDigestPanel();
-      this.ctx.panels['digest'] = this.ctx.digestPanel;
-
-      this.ctx.speciesPanel = new SpeciesComebackPanel();
-      this.ctx.panels['species'] = this.ctx.speciesPanel;
-
-      this.ctx.renewablePanel = new RenewableEnergyPanel();
-      this.ctx.panels['renewable'] = this.ctx.renewablePanel;
-    }
 
     const defaultOrder = Object.keys(DEFAULT_PANELS).filter(k => k !== 'map');
     const savedOrder = this.getSavedPanelOrder();
@@ -779,6 +645,311 @@ export class PanelLayoutManager implements AppModule {
 
     this.applyPanelSettings();
     this.applyInitialUrlState();
+
+    window.addEventListener('map-bounty-click', (e: Event) => {
+      const customEvent = e as CustomEvent<{ lat: number, lng: number }>;
+      this.promptBountyPlacement(customEvent.detail.lat, customEvent.detail.lng);
+    });
+
+    window.addEventListener('approve-bounty-click', (e: Event) => {
+      const customEvent = e as CustomEvent<{ bountyId: string, agentAddress: string, reward: string, contractId?: number }>;
+      this.executeBountyApproval(customEvent.detail.bountyId, customEvent.detail.agentAddress, customEvent.detail.reward, customEvent.detail.contractId);
+    });
+
+    window.addEventListener('bounty-location-click', (e: Event) => {
+      const customEvent = e as CustomEvent<{ lat: number, lng: number }>;
+      this.ctx.map?.setCenter(customEvent.detail.lat, customEvent.detail.lng, 6);
+    });
+
+    window.addEventListener('submit-bounty-report', (e: Event) => {
+      const customEvent = e as CustomEvent<{ bountyId: string, reportUrl: string }>;
+      this.executeBountySubmission(customEvent.detail.bountyId, customEvent.detail.reportUrl);
+    });
+
+    // Bounty Toggle logic
+    document.getElementById('bounties-toggle-btn')?.addEventListener('click', () => {
+      const panel = this.ctx.panels['bounties'];
+      if (panel) {
+        const isHidden = panel.getElement().classList.contains('hidden');
+        panel.toggle(isHidden);
+        // Persist setting
+        if (this.ctx.panelSettings['bounties']) {
+          this.ctx.panelSettings['bounties'].enabled = isHidden;
+          saveToStorage(STORAGE_KEYS.panels, this.ctx.panelSettings);
+        }
+      }
+    });
+  }
+
+  private async promptBountyPlacement(lat: number, lng: number) {
+    const Swal = (await import('sweetalert2')).default;
+
+    const result = await Swal.fire({
+      title: 'PLACE INTELLIGENCE BOUNTY',
+      html: `
+            <div style="text-align: left; margin-top: 10px;">
+                <p class="text-dim text-small" style="margin-bottom: 15px;">Deploy autonomous agents or incentivize human analysts to gather intelligence at these coordinates.</p>
+                <div style="margin-bottom: 10px;">
+                    <label style="color: #00ff66; font-size: 0.8em;">TARGET LOCATION</label>
+                    <input id="bounty-loc" class="swal2-input" value="${lat.toFixed(4)}, ${lng.toFixed(4)}" readonly style="background: rgba(0,255,100,0.1); color: #00ff66; border: 1px solid #00ff66; margin-top: 5px;">
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label style="color: #00f3ff; font-size: 0.8em;">MISSION OBJECTIVE</label>
+                    <textarea id="bounty-desc" class="swal2-textarea" placeholder="Describe the intelligence required (e.g., 'Analyze satellite imagery for troop movements')" style="background: rgba(0,243,255,0.05); color: #fff; border: 1px solid rgba(0,243,255,0.3); margin-top: 5px; min-height: 80px;"></textarea>
+                </div>
+                <div style="margin-bottom: 10px; display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label style="color: #ffb800; font-size: 0.8em;">REWARD AMOUNT</label>
+                        <input id="bounty-rew" type="number" step="0.01" class="swal2-input" placeholder="0.05" style="background: rgba(255,184,0,0.1); color: #ffb800; border: 1px solid rgba(255,184,0,0.3); margin-top: 5px;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="color: #ffb800; font-size: 0.8em;">TOKEN</label>
+                        <select id="bounty-tok" class="swal2-select" style="background: rgba(255,184,0,0.1); color: #ffb800; border: 1px solid rgba(255,184,0,0.3); margin-top: 5px; width: 100%;">
+                            <option value="WARSCAN">WARSCAN</option>
+                            <option value="USDC">USDC (Base)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        `,
+      background: '#0a0a0f',
+      color: '#fff',
+      confirmButtonText: 'DEPLOY CONTRACT',
+      confirmButtonColor: '#ff3366',
+      showCancelButton: true,
+      cancelButtonColor: '#333',
+      cancelButtonText: 'ABORT',
+      customClass: {
+        title: 'cyber-highlight',
+        popup: 'cyber-border',
+        confirmButton: 'cyber-btn-primary',
+        cancelButton: 'cyber-btn-secondary'
+      },
+      preConfirm: () => {
+        const desc = (document.getElementById('bounty-desc') as HTMLTextAreaElement).value;
+        const rew = (document.getElementById('bounty-rew') as HTMLInputElement).value;
+        const tok = (document.getElementById('bounty-tok') as HTMLSelectElement).value;
+
+        if (!desc || !rew) {
+          Swal.showValidationMessage('Objective and Reward are required');
+          return false;
+        }
+        return { desc, rew: parseFloat(rew), tok };
+      }
+    });
+
+    if (result.isConfirmed && result.value) {
+      if (!this.ctx.activeBounties) this.ctx.activeBounties = [];
+      const { desc, rew, tok } = result.value;
+
+      try {
+        let transactionHash = "mock-tx-hash";
+
+        if ((window as any).ethereum) {
+          const provider = new BrowserProvider((window as any).ethereum);
+          const signer = await provider.getSigner();
+          const escrowContract = new Contract(ESCROW_ADDRESS, EscrowArtifact.abi, signer);
+
+          const Swal = (await import('sweetalert2')).default;
+          // 1. Approval Step (if token is not native)
+          if (tok === 'WARSCAN') {
+            const tokenContract = new Contract(WARSCAN_TOKEN_ADDRESS, ERC20_ABI, signer);
+            const rewardWei = parseEther(rew.toString());
+
+            Swal.fire({
+              title: 'Approving Token Usage',
+              text: `Permitting escrow to hold ${rew} WARSCAN...`,
+              allowOutsideClick: false,
+              didOpen: () => { Swal.showLoading(); }
+            });
+
+            const approveTx = await (tokenContract as any).approve(ESCROW_ADDRESS, rewardWei);
+            await approveTx.wait();
+          }
+
+          Swal.fire({
+            title: 'Awaiting Web3 Signature',
+            text: 'Please confirm the bounty deposit in your wallet.',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+          });
+
+          // Send the real Web3 transaction
+          const tx = await (escrowContract as any).createBounty(desc, parseEther(rew.toString()));
+
+          Swal.fire({
+            title: 'Broadcasting Transaction',
+            text: 'Waiting for network confirmation...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+          });
+
+          const receipt = await tx.wait();
+          transactionHash = receipt.hash;
+        } else {
+          // Fallback to mock behavior if no wallet is connected
+          const signed = await BankrWidget.promptSignature(rew, 'Deploy Intelligence Contract');
+          if (!signed) throw new Error("User Rejected");
+        }
+
+        const bounty = {
+          id: "bty-" + Math.floor(Math.random() * 10000),
+          lat: lat,
+          lng: lng,
+          locationName: `Target [${lat.toFixed(2)}, ${lng.toFixed(2)}]`,
+          description: desc,
+          rewardValue: rew,
+          rewardToken: tok,
+          status: 'open' as const,
+          createdAt: new Date().toISOString(),
+        };
+
+        this.ctx.activeBounties.unshift(bounty);
+        if (this.ctx.panels.bounties && 'updateBounties' in this.ctx.panels.bounties) {
+          (this.ctx.panels.bounties as any).updateBounties(this.ctx.activeBounties);
+        }
+
+        const Swal = (await import('sweetalert2')).default;
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'Smart Contract Deployed',
+          text: `TX: ${transactionHash.substring(0, 10)}...`,
+          showConfirmButton: false,
+          timer: 3000,
+          background: '#00ff66',
+          color: '#000'
+        });
+
+      } catch (error: any) {
+        const Swal = (await import('sweetalert2')).default;
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: 'Transaction Failed',
+          text: error.message || 'Rejected',
+          showConfirmButton: false,
+          timer: 3000,
+          background: '#333',
+          color: '#fff'
+        });
+      }
+    }
+  }
+
+  private async executeBountySubmission(bountyId: string, reportUrl: string) {
+    const Swal = (await import('sweetalert2')).default;
+
+    try {
+      // In a real Web3 flow, we might trigger a wallet interaction if required,
+      // but for "submitting work", it's usually just an on-chain record or off-chain notice.
+      // Here we will update our local state to reflect the submission.
+
+      if (this.ctx.activeBounties) {
+        const target = this.ctx.activeBounties.find(b => b.id === bountyId);
+        if (target) {
+          target.status = 'claimed';
+          target.reportUrl = reportUrl;
+          target.agentName = "Agent_Anonymous"; // Mocking agent name for submission
+          target.agentAddress = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"; // Mocking an agent address
+
+          if (this.ctx.panels.bounties && 'updateBounties' in this.ctx.panels.bounties) {
+            (this.ctx.panels.bounties as any).updateBounties([...this.ctx.activeBounties]);
+          }
+        }
+      }
+
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: 'Investigation Submitted',
+        text: 'Awaiting creator review/approval.',
+        showConfirmButton: false,
+        timer: 3000,
+        background: '#00f3ff',
+        color: '#000'
+      });
+    } catch (error: any) {
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'error',
+        title: 'Submission Failed',
+        text: error.message,
+        confirmButtonColor: '#ff3366'
+      });
+    }
+  }
+
+  private async executeBountyApproval(bountyId: string, agentAddress: string, reward: string, contractId?: number) {
+    const Swal = (await import('sweetalert2')).default;
+
+    if (!agentAddress) {
+      return Swal.fire({ icon: 'error', title: 'Invalid Agent Address' });
+    }
+
+    try {
+      if ((window as any).ethereum) {
+        const provider = new BrowserProvider((window as any).ethereum);
+        const signer = await provider.getSigner();
+        const escrowContract = new Contract(ESCROW_ADDRESS, EscrowArtifact.abi, signer);
+
+        Swal.fire({
+          title: 'Approving Payout',
+          text: `Disbursing ${reward} WARSCAN to ${agentAddress.substring(0, 8)}...`,
+          allowOutsideClick: false,
+          didOpen: () => { Swal.showLoading(); }
+        });
+
+        // Use the dynamic contractId (default to 0 for legacy/first test)
+        const idToApprove = contractId !== undefined ? contractId : 0;
+        const tx = await (escrowContract as any).approveWork(idToApprove, agentAddress);
+        await tx.wait();
+      } else {
+        const signed = await BankrWidget.promptSignature(parseFloat(reward), 'Approve Analyst Report Payout');
+        if (!signed) throw new Error("Approval Rejected");
+      }
+
+      // Update UI State
+      if (this.ctx.activeBounties) {
+        const target = this.ctx.activeBounties.find(b => b.id === bountyId);
+        if (target) {
+          target.status = 'completed';
+          target.completedAt = new Date().toISOString();
+          if (this.ctx.panels.bounties && 'updateBounties' in this.ctx.panels.bounties) {
+            (this.ctx.panels.bounties as any).updateBounties([...this.ctx.activeBounties]);
+          }
+        }
+      }
+
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: 'Reward Disbursed',
+        text: 'Funds sent to agent.',
+        showConfirmButton: false,
+        timer: 3000,
+        background: '#00ff66',
+        color: '#000'
+      });
+
+    } catch (error: any) {
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'error',
+        title: 'Approval Failed',
+        text: error.message,
+        showConfirmButton: false,
+        timer: 3000,
+        background: '#333',
+        color: '#fff'
+      });
+    }
   }
 
   private applyTimeRangeFilterToNewsPanels(): void {

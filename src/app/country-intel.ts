@@ -87,7 +87,7 @@ export class CountryIntelManager implements AppModule {
         } : null;
         const posturePanel = this.ctx.panels['strategic-posture'] as StrategicPosturePanel | undefined;
         const postures = posturePanel?.getPostures() || [];
-        const data = collectStoryData(code, name, this.ctx.latestClusters, postures, this.ctx.latestPredictions, signals, convergence);
+        const data = collectStoryData(code, name, this.ctx.latestClusters, postures, [], signals, convergence);
         const canvas = await renderStoryToCanvas(data);
         const dataUrl = canvas.toDataURL('image/png');
         const a = document.createElement('a');
@@ -809,7 +809,7 @@ export class CountryIntelManager implements AppModule {
       signalTypes: [...cluster.signalTypes],
       regionalDescriptions: regional.map(r => r.description),
     } : null;
-    const data = collectStoryData(code, name, this.ctx.latestClusters, postures, this.ctx.latestPredictions, signals, convergence);
+    const data = collectStoryData(code, name, this.ctx.latestClusters, postures, [], signals, convergence);
     openStoryModal(data);
   }
 

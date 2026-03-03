@@ -5,27 +5,16 @@ import type { SecurityAdvisory } from '@/services/security-advisories';
 import type { MapContainer, Panel, NewsPanel, SignalModal, StatusPanel, SearchModal } from '@/components';
 import type { IntelligenceGapBadge } from '@/components';
 import type { MarketData, ClusteredEvent } from '@/types';
-import type { PredictionMarket } from '@/services/prediction';
+import type { ClawnchLaunch } from '@/services/clawnch-api';
 import type { TimeRange } from '@/components';
 import type { Earthquake } from '@/services/earthquakes';
 import type { CountryBriefPanel } from '@/components/CountryBriefPanel';
 import type { CountryTimeline } from '@/components/CountryTimeline';
-import type { PlaybackControl } from '@/components';
 import type { ExportPanel } from '@/utils';
 import type { UnifiedSettings } from '@/components/UnifiedSettings';
-import type { MobileWarningModal, PizzIntIndicator } from '@/components';
 import type { ParsedMapUrlState } from '@/utils';
-import type { PositiveNewsFeedPanel } from '@/components/PositiveNewsFeedPanel';
-import type { CountersPanel } from '@/components/CountersPanel';
-import type { ProgressChartsPanel } from '@/components/ProgressChartsPanel';
-import type { BreakthroughsTickerPanel } from '@/components/BreakthroughsTickerPanel';
-import type { HeroSpotlightPanel } from '@/components/HeroSpotlightPanel';
-import type { GoodThingsDigestPanel } from '@/components/GoodThingsDigestPanel';
-import type { SpeciesComebackPanel } from '@/components/SpeciesComebackPanel';
-import type { RenewableEnergyPanel } from '@/components/RenewableEnergyPanel';
-import type { TvModeController } from '@/services/tv-mode';
 import type { BreakingNewsBanner } from '@/components/BreakingNewsBanner';
-
+import type { AgentBounty } from '@/components/BountyPanel';
 export interface CountryBriefSignals {
   criticalNews: number;
   protests: number;
@@ -82,10 +71,11 @@ export interface AppContext {
   allNews: NewsItem[];
   newsByCategory: Record<string, NewsItem[]>;
   latestMarkets: MarketData[];
-  latestPredictions: PredictionMarket[];
+  latestClawnchLaunches: ClawnchLaunch[];
   latestClusters: ClusteredEvent[];
   intelligenceCache: IntelligenceCache;
   cyberThreatsCache: CyberThreat[] | null;
+  activeBounties: AgentBounty[];
 
   disabledSources: Set<string>;
   currentTimeRange: TimeRange;
@@ -99,25 +89,10 @@ export interface AppContext {
   searchModal: SearchModal | null;
   findingsBadge: IntelligenceGapBadge | null;
   breakingBanner: BreakingNewsBanner | null;
-  playbackControl: PlaybackControl | null;
   exportPanel: ExportPanel | null;
   unifiedSettings: UnifiedSettings | null;
-  mobileWarningModal: MobileWarningModal | null;
-  pizzintIndicator: PizzIntIndicator | null;
   countryBriefPage: CountryBriefPanel | null;
   countryTimeline: CountryTimeline | null;
-
-  // Happy variant state
-  positivePanel: PositiveNewsFeedPanel | null;
-  countersPanel: CountersPanel | null;
-  progressPanel: ProgressChartsPanel | null;
-  breakthroughsPanel: BreakthroughsTickerPanel | null;
-  heroPanel: HeroSpotlightPanel | null;
-  digestPanel: GoodThingsDigestPanel | null;
-  speciesPanel: SpeciesComebackPanel | null;
-  renewablePanel: RenewableEnergyPanel | null;
-  tvMode: TvModeController | null;
-  happyAllItems: NewsItem[];
   isDestroyed: boolean;
   isPlaybackMode: boolean;
   isIdle: boolean;

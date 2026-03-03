@@ -4,12 +4,8 @@ import type { MapView } from '@/components';
 import type { ClusteredEvent } from '@/types';
 import type { DashboardSnapshot } from '@/services/storage';
 import {
-  PlaybackControl,
   StatusPanel,
-  MobileWarningModal,
-  PizzIntIndicator,
   CIIPanel,
-  PredictionPanel,
 } from '@/components';
 import {
   buildMapUrl,
@@ -25,7 +21,6 @@ import {
   LAYER_TO_SOURCE,
   FEEDS,
   INTEL_SOURCES,
-  DEFAULT_PANELS,
 } from '@/config';
 import {
   saveSnapshot,
@@ -48,7 +43,6 @@ import { dataFreshness } from '@/services/data-freshness';
 import { mlWorker } from '@/services/ml-worker';
 import { UnifiedSettings } from '@/components/UnifiedSettings';
 import { t } from '@/services/i18n';
-import { TvModeController } from '@/services/tv-mode';
 
 export interface EventHandlerCallbacks {
   updateSearchIndex: () => void;
@@ -88,49 +82,9 @@ export class EventHandlerManager implements AppModule {
   init(): void {
     this.setupEventListeners();
     this.setupIdleDetection();
-    this.setupTvMode();
   }
 
-  private setupTvMode(): void {
-    if (SITE_VARIANT !== 'happy') return;
 
-    const tvBtn = document.getElementById('tvModeBtn');
-    const tvExitBtn = document.getElementById('tvExitBtn');
-    if (tvBtn) {
-      tvBtn.addEventListener('click', () => this.toggleTvMode());
-    }
-    if (tvExitBtn) {
-      tvExitBtn.addEventListener('click', () => this.toggleTvMode());
-    }
-    // Keyboard shortcut: Shift+T
-    document.addEventListener('keydown', (e) => {
-      if (e.shiftKey && e.key === 'T' && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        const active = document.activeElement;
-        if (active?.tagName !== 'INPUT' && active?.tagName !== 'TEXTAREA') {
-          e.preventDefault();
-          this.toggleTvMode();
-        }
-      }
-    });
-  }
-
-  private toggleTvMode(): void {
-    const panelKeys = Object.keys(DEFAULT_PANELS).filter(
-      key => this.ctx.panelSettings[key]?.enabled !== false
-    );
-    if (!this.ctx.tvMode) {
-      this.ctx.tvMode = new TvModeController({
-        panelKeys,
-        onPanelChange: () => {
-          document.getElementById('tvModeBtn')?.classList.toggle('active', this.ctx.tvMode?.active ?? false);
-        }
-      });
-    } else {
-      this.ctx.tvMode.updatePanelKeys(panelKeys);
-    }
-    this.ctx.tvMode.toggle();
-    document.getElementById('tvModeBtn')?.classList.toggle('active', this.ctx.tvMode.active);
-  }
 
   destroy(): void {
     this.debouncedUrlSync.cancel();
@@ -168,8 +122,7 @@ export class EventHandlerManager implements AppModule {
       clearInterval(this.clockIntervalId);
       this.clockIntervalId = null;
     }
-    this.ctx.tvMode?.destroy();
-    this.ctx.tvMode = null;
+
     this.ctx.unifiedSettings?.destroy();
     this.ctx.unifiedSettings = null;
   }
@@ -512,32 +465,19 @@ export class EventHandlerManager implements AppModule {
     this.clockIntervalId = setInterval(tick, 1000);
   }
 
-  setupMobileWarning(): void {
-    if (MobileWarningModal.shouldShow()) {
-      this.ctx.mobileWarningModal = new MobileWarningModal();
-      this.ctx.mobileWarningModal.show();
-    }
-  }
+
 
   setupStatusPanel(): void {
     this.ctx.statusPanel = new StatusPanel();
   }
 
-  setupPizzIntIndicator(): void {
-    if (SITE_VARIANT === 'tech' || SITE_VARIANT === 'finance' || SITE_VARIANT === 'happy') return;
 
-    this.ctx.pizzintIndicator = new PizzIntIndicator();
-    const headerLeft = this.ctx.container.querySelector('.header-left');
-    if (headerLeft) {
-      headerLeft.appendChild(this.ctx.pizzintIndicator.getElement());
-    }
-  }
 
   setupExportPanel(): void {
     this.ctx.exportPanel = new ExportPanel(() => ({
       news: this.ctx.latestClusters.length > 0 ? this.ctx.latestClusters : this.ctx.allNews,
       markets: this.ctx.latestMarkets,
-      predictions: this.ctx.latestPredictions,
+      clawnch: this.ctx.latestClawnchLaunches,
       timestamp: Date.now(),
     }));
 
@@ -599,23 +539,7 @@ export class EventHandlerManager implements AppModule {
     }
   }
 
-  setupPlaybackControl(): void {
-    this.ctx.playbackControl = new PlaybackControl();
-    this.ctx.playbackControl.onSnapshot((snapshot) => {
-      if (snapshot) {
-        this.ctx.isPlaybackMode = true;
-        this.restoreSnapshot(snapshot);
-      } else {
-        this.ctx.isPlaybackMode = false;
-        this.callbacks.loadAllData();
-      }
-    });
 
-    const headerRight = this.ctx.container.querySelector('.header-right');
-    if (headerRight) {
-      headerRight.insertBefore(this.ctx.playbackControl.getElement(), headerRight.firstChild);
-    }
-  }
 
   setupSnapshotSaving(): void {
     const saveCurrentSnapshot = async () => {
@@ -630,10 +554,7 @@ export class EventHandlerManager implements AppModule {
         timestamp: Date.now(),
         events: this.ctx.latestClusters,
         marketPrices,
-        predictions: this.ctx.latestPredictions.map(p => ({
-          title: p.title,
-          yesPrice: p.yesPrice
-        })),
+        clawnch: this.ctx.latestClawnchLaunches,
         hotspotLevels: this.ctx.map?.getHotspotLevels() ?? {}
       });
     };
@@ -650,17 +571,12 @@ export class EventHandlerManager implements AppModule {
     const events = snapshot.events as ClusteredEvent[];
     this.ctx.latestClusters = events;
 
-    const predictions = snapshot.predictions.map((p, i) => ({
-      id: `snap-${i}`,
-      title: p.title,
-      yesPrice: p.yesPrice,
-      noPrice: 100 - p.yesPrice,
-      volume24h: 0,
-      liquidity: 0,
-    }));
-    this.ctx.latestPredictions = predictions;
-    (this.ctx.panels['polymarket'] as PredictionPanel).renderPredictions(predictions);
-
+    this.ctx.latestClawnchLaunches = snapshot.clawnch as any || [];
+    if (this.ctx.latestClawnchLaunches.length > 0) {
+      if (this.ctx.panels['clawnch']) {
+        (this.ctx.panels['clawnch'] as any).renderLaunches?.(this.ctx.latestClawnchLaunches);
+      }
+    }
     this.ctx.map?.setHotspotLevels(snapshot.hotspotLevels);
   }
 

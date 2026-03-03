@@ -1550,3 +1550,140 @@
   height: 100%;
   min-height: 150px;
 }
+
+/* ----------------------------------------------------------
+   Clawnch Panel (Agent Finance)
+   ---------------------------------------------------------- */
+.clawnch-panel-content {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.clawnch-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.clawnch-link {
+  font-size: 10px;
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.clawnch-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.launch-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 4px;
+  background: var(--overlay-subtle);
+  border: 1px solid var(--border-subtle);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.launch-row:hover {
+  border-color: var(--accent);
+  background: var(--surface-hover);
+}
+
+.launch-image {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--surface);
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+
+.launch-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.launch-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.launch-title {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.launch-symbol {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.launch-symbol.glow-red {
+  color: var(--semantic-critical);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--semantic-critical) 60%, transparent);
+}
+
+.launch-name {
+  font-size: 11px;
+}
+
+.launch-agent {
+  font-size: 10px;
+}
+
+.launch-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.launch-time {
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.launch-source {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  color: var(--accent);
+}
+/* Bounty Panel */
+.bounty-panel-content {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bounty-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bounty-reward {
+  text-shadow: 0 0 10px rgba(0, 255, 100, 0.4);
+}

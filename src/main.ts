@@ -1,190 +1,8 @@
 import './styles/base-layer.css';
 import './styles/happy-theme.css';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import * as Sentry from '@sentry/browser';
 import { inject } from '@vercel/analytics';
 import { App } from './App';
-
-const sentryDsn = import.meta.env.VITE_SENTRY_DSN?.trim();
-
-// Initialize Sentry error tracking (early as possible)
-Sentry.init({
-  dsn: sentryDsn || undefined,
-  release: `worldmonitor@${__APP_VERSION__}`,
-  environment: location.hostname === 'worldmonitor.app' ? 'production'
-    : location.hostname.includes('vercel.app') ? 'preview'
-    : 'development',
-  enabled: Boolean(sentryDsn) && !location.hostname.startsWith('localhost') && !('__TAURI_INTERNALS__' in window),
-  sendDefaultPii: true,
-  tracesSampleRate: 0.1,
-  ignoreErrors: [
-    'Invalid WebGL2RenderingContext',
-    'WebGL context lost',
-    /imageManager/,
-    /ResizeObserver loop/,
-    /NotAllowedError/,
-    /InvalidAccessError/,
-    /importScripts/,
-    /^TypeError: Load failed( \(.*\))?$/,
-    /^TypeError: Failed to fetch( \(.*\))?$/,
-    /^TypeError: cancelled$/,
-    /^TypeError: NetworkError/,
-    /runtime\.sendMessage\(\)/,
-    /Java object is gone/,
-    /^Object captured as promise rejection with keys:/,
-    /Unable to load image/,
-    /Non-Error promise rejection captured with value:/,
-    /Connection to Indexed Database server lost/,
-    /webkit\.messageHandlers/,
-    /(?:unsafe-eval.*Content Security Policy|Content Security Policy.*unsafe-eval)/,
-    /Fullscreen request denied/,
-    /requestFullscreen/,
-    /webkitEnterFullscreen/,
-    /vc_text_indicators_context/,
-    /Program failed to link/,
-    /too much recursion/,
-    /zaloJSV2/,
-    /Java bridge method invocation error/,
-    /Could not compile fragment shader/,
-    /can't redefine non-configurable property/,
-    /Can.t find variable: (CONFIG|currentInset|NP|webkit|EmptyRanges|logMutedMessage|UTItemActionController|DarkReader|Readability|onPageLoaded|Game|frappe|getPercent|ucConfig|\$a)/,
-    /invalid origin/,
-    /\.data\.split is not a function/,
-    /signal is aborted without reason/,
-    /Failed to fetch dynamically imported module/,
-    /Importing a module script failed/,
-    /contentWindow\.postMessage/,
-    /Could not compile vertex shader/,
-    /objectStoreNames/,
-    /Unexpected identifier 'https'/,
-    /Can't find variable: _0x/,
-    /WKWebView was deallocated/,
-    /Unexpected end of(?: JSON)? input/,
-    /window\.android\.\w+ is not a function/,
-    /Attempted to assign to readonly property/,
-    /Cannot assign to read only property/,
-    /FetchEvent\.respondWith/,
-    /e\.toLowerCase is not a function/,
-    /\.trim is not a function/,
-    /\.(indexOf|findIndex) is not a function/,
-    /QuotaExceededError/,
-    /^TypeError: 已取消$/,
-    /Maximum call stack size exceeded/,
-    /^fetchError: Network request failed$/,
-    /window\.ethereum/,
-    /^SyntaxError: Unexpected token/,
-    /^Operation timed out\.?$/,
-    /setting 'luma'/,
-    /ML request .* timed out/,
-    /^Element not found$/,
-    /(?:AbortError: )?The operation was aborted\.?\s*$/,
-    /Unexpected end of script/,
-    /error loading dynamically imported module/,
-    /Style is not done loading/,
-    /Event `CustomEvent`.*captured as promise rejection/,
-    /getProgramInfoLog/,
-    /__firefox__/,
-    /ifameElement\.contentDocument/,
-    /Invalid video id/,
-    /Fetch is aborted/,
-    /Stylesheet append timeout/,
-    /Worker is not a constructor/,
-    /_pcmBridgeCallbackHandler/,
-    /UCShellJava/,
-    /Cannot define multiple custom elements/,
-    /maxTextureDimension2D/,
-    /Container app not found/,
-    /this\.St\.unref/,
-    /Invalid or unexpected token/,
-    /evaluating 'elemFound\.value'/,
-    /[Cc]an(?:'t|not) access (?:'\w+'|lexical declaration '\w+') before initialization/,
-    /^Uint8Array$/,
-    /createObjectStore/,
-    /The database connection is closing/,
-    /shortcut icon/,
-    /Attempting to change value of a readonly property/,
-    /reading 'nodeType'/,
-    /feature named .\w+. was not found/,
-    /a2z\.onStatusUpdate/,
-    /Attempting to run\(\), but is already running/,
-    /this\.player\.destroy is not a function/,
-    /isReCreate is not defined/,
-    /reading 'style'.*HTMLImageElement/,
-    /can't access property "write", \w+ is undefined/,
-    /AbortError: The user aborted a request/,
-    /\w+ is not a function.*\/uv\/service\//,
-    /__isInQueue__/,
-    /^(?:LIDNotify(?:Id)?|onWebViewAppeared|onGetWiFiBSSID) is not defined$/,
-    /signal timed out/,
-    /Se requiere plan premium/,
-    /hybridExecute is not defined/,
-    /reading 'postMessage'/,
-    /NotSupportedError/,
-    /appendChild.*Unexpected token/,
-    /\bmag is not defined\b/,
-    /evaluating '[^']*\.luma/,
-    /translateNotifyError/,
-    /GM_getValue/,
-    /^InvalidStateError:|The object is in an invalid state/,
-    /Could not establish connection\. Receiving end does not exist/,
-    /webkitCurrentPlaybackTargetIsWireless/,
-    /webkit(?:Supports)?PresentationMode/,
-    /Cannot redefine property: webdriver/,
-    /null is not an object \(evaluating '\w+\.theme'\)/,
-    /this\.player\.\w+ is not a function/,
-    /videoTrack\.configuration/,
-    /evaluating 'v\.setProps'/,
-    /button\[aria-label/,
-    /The fetching process for the media resource was aborted/,
-    /Invalid regular expression: missing/,
-    /WeixinJSBridge/,
-    /evaluating 'e\.type'/,
-    /Policy with name .* already exists/,
-    /[sx]wbrowser is not defined/,
-    /browser\.storage\.local/,
-    /The play\(\) request was interrupted/,
-    /MutationEvent is not defined/,
-    /Cannot redefine property: userAgent/,
-    /st_framedeep|ucbrowser_script/,
-    /iabjs_unified_bridge/,
-    /DarkReader/,
-    /window\.receiveMessage/,
-    /Cross-origin script load denied/,
-    /orgSetInterval is not a function/,
-    /Blocked a frame with origin.*accessing a cross-origin frame/,
-    /SnapTube/,
-    /sortedTrackListForMenu/,
-    /isWhiteToBlack/,
-    /window\.videoSniffer/,
-    /closeTabMediaModal/,
-    /missing \) after argument list/,
-    /Error invoking postMessage: Java exception/,
-    /IndexSizeError/,
-  ],
-  beforeSend(event) {
-    const msg = event.exception?.values?.[0]?.value ?? '';
-    if (msg.length <= 3 && /^[a-zA-Z_$]+$/.test(msg)) return null;
-    const frames = event.exception?.values?.[0]?.stacktrace?.frames ?? [];
-    // Suppress maplibre internal null-access crashes (light, placement) only when stack is in map chunk
-    if (/this\.style\._layers|reading '_layers'|this\.(light|sky) is null|can't access property "(id|type|setFilter)", \w+ is (null|undefined)|Cannot read properties of null \(reading '(id|type|setFilter|_layers)'\)|null is not an object \(evaluating '\w{1,3}\.(id|style)|^\w{1,2} is null$/.test(msg)) {
-      if (frames.some(f => /\/(map|maplibre|deck-stack)-[A-Za-z0-9_-]+\.js/.test(f.filename ?? ''))) return null;
-    }
-    // Suppress any TypeError that happens entirely within maplibre or deck.gl internals
-    if (/^TypeError:/.test(msg) && frames.length > 0) {
-      const nonSentryFrames = frames.filter(f => f.filename && f.filename !== '<anonymous>' && !/\/sentry-[A-Za-z0-9_-]+\.js/.test(f.filename));
-      if (nonSentryFrames.length > 0 && nonSentryFrames.every(f => /\/(map|maplibre|deck-stack)-[A-Za-z0-9_-]+\.js/.test(f.filename ?? ''))) return null;
-    }
-    // Suppress deck.gl/maplibre null-access crashes with no usable stack trace (requestAnimationFrame wrapping)
-    if (/null is not an object \(evaluating '\w{1,3}\.(id|type|style)'\)/.test(msg) && frames.length === 0) return null;
-    // Suppress TypeErrors from anonymous/injected scripts (no real source files)
-    if (/^TypeError:/.test(msg) && frames.length > 0 && frames.every(f => !f.filename || f.filename === '<anonymous>' || /^blob:/.test(f.filename))) return null;
-    // Suppress errors originating entirely from blob: URLs (browser extensions)
-    if (frames.length > 0 && frames.every(f => /^blob:/.test(f.filename ?? ''))) return null;
-    // Suppress YouTube IFrame widget API internal errors
-    if (frames.some(f => /www-widgetapi\.js/.test(f.filename ?? ''))) return null;
-    return event;
-  },
-});
 // Suppress NotAllowedError from YouTube IFrame API's internal play() — browser autoplay policy,
 // not actionable. The YT IFrame API doesn't expose the play() promise so it leaks as unhandled.
 window.addEventListener('unhandledrejection', (e) => {
@@ -193,6 +11,7 @@ window.addEventListener('unhandledrejection', (e) => {
 
 import { debugGetCells, getCellCount } from '@/services/geo-convergence';
 import { initMetaTags } from '@/services/meta-tags';
+import { initWeb3WalletButton } from '@/services/web3';
 import { installRuntimeFetchPatch, installWebApiRedirect } from '@/services/runtime';
 import { loadDesktopSecrets } from '@/services/runtime-config';
 import { applyStoredTheme } from '@/utils/theme-manager';
@@ -212,7 +31,7 @@ initMetaTags();
 installRuntimeFetchPatch();
 // In web production, route RPC calls through api.worldmonitor.app (Cloudflare edge).
 installWebApiRedirect();
-loadDesktopSecrets().catch(() => {});
+loadDesktopSecrets().catch(() => { });
 
 // Apply stored theme preference before app initialization (safety net for inline script)
 applyStoredTheme();
@@ -260,6 +79,9 @@ if (urlParams.get('settings') === '1') {
     .init()
     .then(() => {
       clearChunkReloadGuard(chunkReloadStorageKey);
+
+      // Initialize Web3 Wallet connection logic on header loaded
+      initWeb3WalletButton('connect-wallet-btn');
     })
     .catch(console.error);
 }
@@ -300,7 +122,7 @@ if (!('__TAURI_INTERNALS__' in window) && !('__TAURI__' in window) && 'serviceWo
       console.log('[PWA] Service worker registered');
       const swUpdateInterval = setInterval(async () => {
         if (!navigator.onLine) return;
-        try { await registration.update(); } catch {}
+        try { await registration.update(); } catch { }
       }, 60 * 60 * 1000);
       // Expose interval ID for cleanup/debugging
       (window as unknown as Record<string, unknown>).__swUpdateInterval = swUpdateInterval;

@@ -439,13 +439,13 @@ export class SearchManager implements AppModule {
           setTheme(action);
         } else if (action === 'fullscreen') {
           if (document.fullscreenElement) {
-            try { void document.exitFullscreen()?.catch(() => {}); } catch {}
+            try { void document.exitFullscreen()?.catch(() => { }); } catch { }
           } else {
             const el = document.documentElement as HTMLElement & { webkitRequestFullscreen?: () => void };
             if (el.requestFullscreen) {
-              try { void el.requestFullscreen()?.catch(() => {}); } catch {}
+              try { void el.requestFullscreen()?.catch(() => { }); } catch { }
             } else if (el.webkitRequestFullscreen) {
-              try { el.webkitRequestFullscreen(); } catch {}
+              try { el.webkitRequestFullscreen(); } catch { }
             }
           }
         } else if (action === 'settings') {
@@ -519,12 +519,12 @@ export class SearchManager implements AppModule {
     console.log(`[Search] Indexing ${newsItems.length} news items (allNews total: ${this.ctx.allNews.length})`);
     this.ctx.searchModal.registerSource('news', newsItems);
 
-    if (this.ctx.latestPredictions.length > 0) {
-      this.ctx.searchModal.registerSource('prediction', this.ctx.latestPredictions.map(p => ({
-        id: p.title,
-        title: p.title,
-        subtitle: `${Math.round(p.yesPrice)}% probability`,
-        data: p,
+    if (this.ctx.latestClawnchLaunches.length > 0) {
+      this.ctx.searchModal.registerSource('token', this.ctx.latestClawnchLaunches.map(l => ({
+        id: l.symbol,
+        title: `${l.name} (${l.symbol})`,
+        subtitle: `Agent: ${l.agentName}`,
+        data: l,
       })));
     }
 

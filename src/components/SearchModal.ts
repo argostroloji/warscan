@@ -48,7 +48,7 @@ function resolveCategoryLabel(cmd: Command): string {
   return key ? t(key, { defaultValue: cmd.category }) : cmd.category;
 }
 
-export type SearchResultType = 'country' | 'news' | 'hotspot' | 'market' | 'prediction' | 'conflict' | 'base' | 'pipeline' | 'cable' | 'datacenter' | 'earthquake' | 'outage' | 'nuclear' | 'irradiator' | 'techcompany' | 'ailab' | 'startup' | 'techevent' | 'techhq' | 'accelerator' | 'exchange' | 'financialcenter' | 'centralbank' | 'commodityhub';
+export type SearchResultType = 'country' | 'news' | 'hotspot' | 'market' | 'token' | 'prediction' | 'conflict' | 'base' | 'pipeline' | 'cable' | 'datacenter' | 'earthquake' | 'outage' | 'nuclear' | 'irradiator' | 'techcompany' | 'ailab' | 'startup' | 'techevent' | 'techhq' | 'accelerator' | 'exchange' | 'financialcenter' | 'centralbank' | 'commodityhub';
 
 export interface SearchResult {
   type: SearchResultType;
@@ -347,6 +347,7 @@ export class SearchModal {
       news: '\u{1F4F0}',
       hotspot: '\u{1F4CD}',
       market: '\u{1F4C8}',
+      token: '\u{1F4B0}',
       prediction: '\u{1F3AF}',
       conflict: '\u2694\uFE0F',
       base: '\u{1F3DB}\uFE0F',
