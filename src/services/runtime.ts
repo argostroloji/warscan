@@ -141,7 +141,7 @@ function extractHostnames(...urls: (string | undefined)[]): string[] {
   const hosts: string[] = [];
   for (const u of urls) {
     if (!u) continue;
-    try { hosts.push(new URL(u).hostname); } catch {}
+    try { hosts.push(new URL(u).hostname); } catch { }
   }
   return hosts;
 }
@@ -400,51 +400,7 @@ function isAllowedRedirectTarget(url: string): boolean {
 }
 
 export function installWebApiRedirect(): void {
-  if (isDesktopRuntime() || typeof window === 'undefined') return;
-  if (!WS_API_URL) return;
-  if (!isAllowedRedirectTarget(WS_API_URL)) {
-    console.warn('[runtime] VITE_WS_API_URL blocked — not in hostname allowlist:', WS_API_URL);
-    return;
-  }
-  if ((window as unknown as Record<string, unknown>).__wmWebRedirectPatched) return;
-
-  const nativeFetch = window.fetch.bind(window);
-  const API_BASE = WS_API_URL;
-  const shouldRedirectPath = (pathWithQuery: string): boolean => pathWithQuery.startsWith('/api/');
-  const shouldFallbackToOrigin = (status: number): boolean => status === 404 || status === 405 || status === 501 || status === 502 || status === 503;
-  const fetchWithRedirectFallback = async (
-    redirectedInput: RequestInfo | URL,
-    originalInput: RequestInfo | URL,
-    originalInit?: RequestInit,
-  ): Promise<Response> => {
-    try {
-      const redirectedResponse = await nativeFetch(redirectedInput, originalInit);
-      if (!shouldFallbackToOrigin(redirectedResponse.status)) return redirectedResponse;
-      return nativeFetch(originalInput, originalInit);
-    } catch {
-      return nativeFetch(originalInput, originalInit);
-    }
-  };
-
-  window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    if (typeof input === 'string' && shouldRedirectPath(input)) {
-      return fetchWithRedirectFallback(`${API_BASE}${input}`, input, init);
-    }
-    if (input instanceof URL && input.origin === window.location.origin && shouldRedirectPath(`${input.pathname}${input.search}`)) {
-      return fetchWithRedirectFallback(new URL(`${API_BASE}${input.pathname}${input.search}`), input, init);
-    }
-    if (input instanceof Request) {
-      const u = new URL(input.url);
-      if (u.origin === window.location.origin && shouldRedirectPath(`${u.pathname}${u.search}`)) {
-        return fetchWithRedirectFallback(
-          new Request(`${API_BASE}${u.pathname}${u.search}`, input),
-          input.clone(),
-          init,
-        );
-      }
-    }
-    return nativeFetch(input, init);
-  };
-
-  (window as unknown as Record<string, unknown>).__wmWebRedirectPatched = true;
+  // Legacy client-side redirect removed as it triggers CORS blocks on Vercel.
+  // Use server-side WS_RELAY_URL instead.
+  return;
 }

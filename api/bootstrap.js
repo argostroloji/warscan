@@ -4,21 +4,21 @@ import { validateApiKey } from './_api-key.js';
 export const config = { runtime: 'edge' };
 
 const BOOTSTRAP_CACHE_KEYS = {
-  earthquakes:      'seismology:earthquakes:v1',
-  outages:          'infra:outages:v1',
-  serviceStatuses:  'infra:service-statuses:v1',
-  sectors:          'market:sectors:v1',
-  etfFlows:         'market:etf-flows:v1',
-  macroSignals:     'economic:macro-signals:v1',
-  bisPolicy:        'economic:bis:policy:v1',
-  bisExchange:      'economic:bis:eer:v1',
-  bisCredit:        'economic:bis:credit:v1',
-  shippingRates:    'supply_chain:shipping:v2',
-  chokepoints:      'supply_chain:chokepoints:v1',
-  minerals:         'supply_chain:minerals:v1',
-  giving:           'giving:summary:v1',
+  earthquakes: 'seismology:earthquakes:v1',
+  outages: 'infra:outages:v1',
+  serviceStatuses: 'infra:service-statuses:v1',
+  sectors: 'market:sectors:v1',
+  etfFlows: 'market:etf-flows:v1',
+  macroSignals: 'economic:macro-signals:v1',
+  bisPolicy: 'economic:bis:policy:v1',
+  bisExchange: 'economic:bis:eer:v1',
+  bisCredit: 'economic:bis:credit:v1',
+  shippingRates: 'supply_chain:shipping:v2',
+  chokepoints: 'supply_chain:chokepoints:v1',
+  minerals: 'supply_chain:minerals:v1',
+  giving: 'giving:summary:v1',
   climateAnomalies: 'climate:anomalies:v1',
-  wildfires:        'wildfire:fires:v1',
+  wildfires: 'wildfire:fires:v1',
 };
 
 const SLOW_KEYS = new Set([
@@ -102,11 +102,33 @@ export default async function handler(req) {
   let cached;
   try {
     cached = await getCachedJsonBatch(keys);
-  } catch {
+  } catch (err) {
+    const relayUrl = process.env.WS_RELAY_URL?.replace('wss://', 'https://').replace('ws://', 'http://').replace(/\/$/, '');
+    if (relayUrl) {
+      try {
+        const url = new URL(req.url);
+        const remoteUrl = `${relayUrl}${url.pathname}${url.search}`;
+        const resp = await fetch(remoteUrl, { headers: { ...cors } });
+        if (resp.ok) return resp;
+      } catch { /* fallback to empty */ }
+    }
+
     return new Response(JSON.stringify({ data: {}, missing: names }), {
       status: 200,
       headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
     });
+  }
+
+  // If we have some data but many are missing, and we have a relay, try to merge? 
+  // For simplicity, if everything is missing and we have a relay, just relay the whole request.
+  if (cached.size === 0 && process.env.WS_RELAY_URL) {
+    try {
+      const relayUrl = process.env.WS_RELAY_URL.replace('wss://', 'https://').replace('ws://', 'http://').replace(/\/$/, '');
+      const url = new URL(req.url);
+      const remoteUrl = `${relayUrl}${url.pathname}${url.search}`;
+      const resp = await fetch(remoteUrl, { headers: { ...cors } });
+      if (resp.ok) return resp;
+    } catch { /* ignore */ }
   }
 
   const data = {};
