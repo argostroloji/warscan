@@ -148,8 +148,7 @@ export function createDomainGateway(
       const relayUrl = `${relayBaseUrl}${url.pathname}${url.search}`;
 
       const relayHeaders = new Headers(request.headers);
-      // 🔥 Spoof headers to look like a trusted same-origin request from worldmonitor.app UI.
-      // This bypasses many server-side security checks that block unknown proxies.
+      // Spoof headers to look like a trusted same-origin request from worldmonitor.app UI.
       relayHeaders.set('Origin', 'https://worldmonitor.app');
       relayHeaders.set('Referer', 'https://worldmonitor.app/');
       relayHeaders.delete('host');
@@ -164,28 +163,36 @@ export function createDomainGateway(
         relayHeaders.set('Authorization', `Bearer ${relaySecret}`);
       }
 
-      const response = await fetch(relayUrl, {
-        method: request.method,
-        headers: relayHeaders,
-        body: request.method !== 'GET' && request.method !== 'HEAD' ? await request.clone().arrayBuffer() : undefined,
-      });
+      try {
+        const response = await fetch(relayUrl, {
+          method: request.method,
+          headers: relayHeaders,
+          body: request.method !== 'GET' && request.method !== 'HEAD' ? await request.clone().arrayBuffer() : undefined,
+          signal: AbortSignal.timeout(15_000), // 15s timeout to stay under Vercel's 25s limit
+        });
 
-      const body = await response.arrayBuffer();
-      const responseHeaders = new Headers(response.headers);
-      // Merge our CORS headers into the relayed response
-      for (const [k, v] of Object.entries(corsHeaders)) {
-        responseHeaders.set(k, v);
+        const body = await response.arrayBuffer();
+        const responseHeaders = new Headers(response.headers);
+        for (const [k, v] of Object.entries(corsHeaders)) {
+          responseHeaders.set(k, v);
+        }
+        responseHeaders.delete('content-encoding');
+        responseHeaders.delete('content-length');
+
+        return new Response(body, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: responseHeaders,
+        });
+      } catch (err) {
+        // Timeout or network error — return empty JSON so the UI can gracefully degrade
+        const isTimeout = (err as Error)?.name === 'AbortError' || (err as Error)?.name === 'TimeoutError';
+        console.warn(`[relay] ${isTimeout ? 'Timeout' : 'Error'} for ${url.pathname}:`, (err as Error)?.message);
+        return new Response(JSON.stringify({ error: isTimeout ? 'Relay timeout' : 'Relay failed' }), {
+          status: isTimeout ? 504 : 502,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
       }
-
-      // Remove remote-specific headers that might cause issues with proxying
-      responseHeaders.delete('content-encoding');
-      responseHeaders.delete('content-length');
-
-      return new Response(body, {
-        status: response.status,
-        statusText: response.statusText,
-        headers: responseHeaders,
-      });
     };
 
     if (relayBaseUrl && !isLocalApi && pathname.startsWith('/api/')) {
