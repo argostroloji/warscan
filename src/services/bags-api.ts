@@ -76,21 +76,11 @@ export class BagsApiService {
     }
 
     /**
-     * Fetch trending/recent tokens from Bags
-     * Uses a lightweight proxy or fallback data
+     * Get tokens to display in the Bags panel.
+     * Returns WARSCAN token info + any future tokens.
      */
     async getTrendingTokens(): Promise<BagsTrendingToken[]> {
-        try {
-            // Bags doesn't have a direct "trending" endpoint in their public API yet.
-            // We'll use the Bags website feed as a data source via our API proxy.
-            const res = await fetch('/api/bags/trending');
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const data = await res.json();
-            return data.tokens || [];
-        } catch (err) {
-            console.warn('[BagsAPI] Trending fetch failed, using fallback');
-            return this.getFallbackTokens();
-        }
+        return this.getFallbackTokens();
     }
 
     /**
