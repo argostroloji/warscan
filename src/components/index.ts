@@ -7,6 +7,7 @@ export { MapContainer, type MapView, type TimeRange, type MapContainerState } fr
 export * from './NewsPanel';
 export * from './MarketPanel';
 export * from './ClawnchPanel';
+export * from './BagsPanel';
 export * from './MonitorPanel';
 export * from './SignalModal';
 export * from './StatusPanel';

@@ -5,7 +5,7 @@ import {
   MapContainer,
   NewsPanel,
   MarketPanel,
-  ClawnchPanel,
+  BagsPanel,
   MonitorPanel,
   GdeltIntelPanel,
   LiveNewsPanel,
@@ -363,8 +363,8 @@ export class PanelLayoutManager implements AppModule {
     });
 
 
-    const clawnchPanel = new ClawnchPanel();
-    this.ctx.panels['clawnch'] = clawnchPanel;
+    const bagsPanel = new BagsPanel();
+    this.ctx.panels['bags'] = bagsPanel;
 
     const bountyPanel = new BountyPanel('bounties');
     this.ctx.panels['bounties'] = bountyPanel;

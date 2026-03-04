@@ -76,7 +76,7 @@ import { fetchTelegramFeed } from '@/services/telegram-intel';
 import { fetchOrefAlerts, startOrefPolling, stopOrefPolling, onOrefAlertsUpdate } from '@/services/oref-alerts';
 import { enrichEventsWithExposure } from '@/services/population-exposure';
 import { debounce, getCircuitBreakerCooldownInfo } from '@/utils';
-import { clawnchApi } from '@/services/clawnch-api';
+import { bagsApi } from '@/services/bags-api';
 import { isFeatureAvailable, isFeatureEnabled } from '@/services/runtime-config';
 import { getAiFlowSettings } from '@/services/ai-flow-settings';
 import { t, getCurrentLanguage } from '@/services/i18n';
@@ -245,7 +245,7 @@ export class DataLoaderManager implements AppModule {
     // Happy variant only loads news data -- skip all geopolitical/financial/military data
     if (SITE_VARIANT !== 'happy') {
       tasks.push({ name: 'markets', task: runGuarded('markets', () => this.loadMarkets()) });
-      tasks.push({ name: 'clawnch', task: runGuarded('clawnch', () => this.loadClawnchData()) });
+      tasks.push({ name: 'bags', task: runGuarded('bags', () => this.loadBagsData()) });
       tasks.push({ name: 'pizzint', task: runGuarded('pizzint', () => this.loadPizzInt()) });
       tasks.push({ name: 'fred', task: runGuarded('fred', () => this.loadFredData()) });
       tasks.push({ name: 'oil', task: runGuarded('oil', () => this.loadOilAnalytics()) });
@@ -893,23 +893,22 @@ export class DataLoaderManager implements AppModule {
     }
   }
 
-  async loadClawnchData(): Promise<void> {
+  async loadBagsData(): Promise<void> {
     try {
-      const res = await clawnchApi.getRecentLaunches(20);
-      const launches = res?.launches || [];
-      this.ctx.latestClawnchLaunches = launches;
+      const tokens = await bagsApi.getTrendingTokens();
+      this.ctx.latestClawnchLaunches = tokens as any;
 
-      if (this.ctx.panels['clawnch']) {
-        (this.ctx.panels['clawnch'] as any).renderLaunches?.(launches);
+      if (this.ctx.panels['bags']) {
+        (this.ctx.panels['bags'] as any).renderTokens?.(tokens);
       }
 
-      this.ctx.statusPanel?.updateFeed('Clawnch', { status: 'ok', itemCount: launches.length });
-      this.ctx.statusPanel?.updateApi('Clawnch', { status: 'ok' });
-      dataFreshness.recordUpdate('clawnch', launches.length);
+      this.ctx.statusPanel?.updateFeed('Bags', { status: 'ok', itemCount: tokens.length });
+      this.ctx.statusPanel?.updateApi('Bags', { status: 'ok' });
+      dataFreshness.recordUpdate('bags', tokens.length);
     } catch (error) {
-      this.ctx.statusPanel?.updateFeed('Clawnch', { status: 'error', errorMessage: String(error) });
-      this.ctx.statusPanel?.updateApi('Clawnch', { status: 'error' });
-      dataFreshness.recordError('clawnch', String(error));
+      this.ctx.statusPanel?.updateFeed('Bags', { status: 'error', errorMessage: String(error) });
+      this.ctx.statusPanel?.updateApi('Bags', { status: 'error' });
+      dataFreshness.recordError('bags', String(error));
     }
   }
 

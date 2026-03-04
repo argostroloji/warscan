@@ -171,7 +171,7 @@ export interface DashboardSnapshot {
   timestamp: number;
   events: unknown[];
   marketPrices: Record<string, number>;
-  clawnch: any[];
+  bags: any[];
   hotspotLevels: Record<string, string>;
 }
 

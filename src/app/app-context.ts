@@ -5,7 +5,7 @@ import type { SecurityAdvisory } from '@/services/security-advisories';
 import type { MapContainer, Panel, NewsPanel, SignalModal, StatusPanel, SearchModal } from '@/components';
 import type { IntelligenceGapBadge } from '@/components';
 import type { MarketData, ClusteredEvent } from '@/types';
-import type { ClawnchLaunch } from '@/services/clawnch-api';
+import type { BagsTrendingToken } from '@/services/bags-api';
 import type { TimeRange } from '@/components';
 import type { Earthquake } from '@/services/earthquakes';
 import type { CountryBriefPanel } from '@/components/CountryBriefPanel';
@@ -71,7 +71,7 @@ export interface AppContext {
   allNews: NewsItem[];
   newsByCategory: Record<string, NewsItem[]>;
   latestMarkets: MarketData[];
-  latestClawnchLaunches: ClawnchLaunch[];
+  latestClawnchLaunches: any[];
   latestClusters: ClusteredEvent[];
   intelligenceCache: IntelligenceCache;
   cyberThreatsCache: CyberThreat[] | null;
