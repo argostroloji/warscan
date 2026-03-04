@@ -322,13 +322,14 @@ export class BagsApiService {
 
         // Push user searched token dynamically to list
         if (!this.tokenCache?.find(t => t.mint === tokenMint)) {
+            let newToken: BagsTrendingToken | null = null;
             try {
                 const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokenMint}`);
                 if (res.ok) {
                     const data = await res.json();
                     if (data.pairs?.[0] && data.pairs[0].chainId === 'solana') {
                         const pair = data.pairs[0];
-                        const newToken: BagsTrendingToken = {
+                        newToken = {
                             mint: pair.baseToken.address,
                             name: pair.baseToken.name || 'Searched Token',
                             symbol: pair.baseToken.symbol || '???',
@@ -340,12 +341,25 @@ export class BagsApiService {
                             createdAt: pair.pairCreatedAt ? new Date(pair.pairCreatedAt).toISOString() : new Date().toISOString(),
                             url: BagsApiService.getTokenUrl(pair.baseToken.address),
                         };
-                        this.tokenCache = this.tokenCache || [];
-                        this.tokenCache.unshift(newToken);
-                        window.dispatchEvent(new CustomEvent('bags-tokens-updated', { detail: this.tokenCache }));
                     }
                 }
-            } catch (e) { /* ignore fetching failures natively */ }
+            } catch (e) { console.warn('DexScreener fetch failed for new CA', e); }
+
+            if (!newToken) {
+                // If token is brand new and completely unknown to APIs, inject a generic one
+                newToken = {
+                    mint: tokenMint,
+                    name: `Token ${tokenMint.slice(0, 6)}...`,
+                    symbol: 'NEW',
+                    image: 'https://pbs.twimg.com/profile_images/2028937335581065216/Ucf07N82_400x400.jpg',
+                    createdAt: new Date().toISOString(),
+                    url: BagsApiService.getTokenUrl(tokenMint),
+                };
+            }
+
+            this.tokenCache = this.tokenCache || [];
+            this.tokenCache.unshift(newToken);
+            window.dispatchEvent(new CustomEvent('bags-tokens-updated', { detail: this.tokenCache }));
         }
 
         return stats;
