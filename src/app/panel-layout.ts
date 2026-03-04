@@ -32,7 +32,7 @@ import { BrowserProvider, Contract, parseEther } from 'ethers';
 import EscrowArtifact from '@/contracts/WarScanBountyEscrow.json';
 
 const ESCROW_ADDRESS = (import.meta as any).env.VITE_ESCROW_ADDRESS || "0x8888888888888888888888888888888888888888";
-const WARSCAN_TOKEN_ADDRESS = (import.meta as any).env.VITE_WARSCAN_TOKEN_ADDRESS || "0x9999999999999999999999999999999999999999";
+const WARSCAN_TOKEN_ADDRESS = (import.meta as any).env.VITE_WARSCAN_TOKEN_ADDRESS || "0xFEDAE2263C7AaC699c277d3F27b6E5B53feD8bA3";
 
 const ERC20_ABI = [
   "function approve(address spender, uint256 amount) public returns (bool)",
