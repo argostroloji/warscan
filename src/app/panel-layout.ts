@@ -743,7 +743,6 @@ export class PanelLayoutManager implements AppModule {
                         <label style="color: #ffb800; font-size: 0.8em;">TOKEN</label>
                         <select id="bounty-tok" class="swal2-select" style="background: rgba(255,184,0,0.1); color: #ffb800; border: 1px solid rgba(255,184,0,0.3); margin-top: 5px; width: 100%;">
                             <option value="WARSCAN">WARSCAN</option>
-                            <option value="USDC">USDC (Base)</option>
                         </select>
                     </div>
                 </div>
@@ -779,12 +778,12 @@ export class PanelLayoutManager implements AppModule {
       if (!this.ctx.activeBounties) this.ctx.activeBounties = [];
       const { desc, rew, tok } = result.value;
 
-      // BETA LIMIT: Max $10 equivalent
-      if (rew > 10) {
+      // BETA LIMIT: Max 100000 WARSCAN
+      if (rew > 100000) {
         const Swal = (await import('sweetalert2')).default;
         Swal.fire({
           title: 'Beta Limit Exceeded',
-          text: 'During the beta phase, the maximum bounty reward is limited to 10 ' + tok + ' (approx $10). Please reduce the reward amount.',
+          text: 'During the beta phase, the maximum bounty reward is limited to 100,000 WARSCAN. Please reduce the reward amount.',
           icon: 'warning',
           background: '#0a0a0f',
           color: '#ffb800',
@@ -864,6 +863,77 @@ export class PanelLayoutManager implements AppModule {
           icon: 'error',
           title: 'Transaction Failed',
           text: error.message || 'Rejected',
+          showConfirmButton: false,
+          timer: 3000,
+          background: '#333',
+          color: '#fff'
+        });
+      }
+    }
+  }
+
+  private async promptBountyResolution(bountyId: string) {
+    const Swal = (await import('sweetalert2')).default;
+    const target = this.ctx.activeBounties?.find(b => b.id === bountyId);
+
+    if (!target) return;
+
+    const result = await Swal.fire({
+      title: 'Approve Intelligence Report?',
+      text: `Are you sure you want to approve the report submitted by ${target.agentName || 'Agent'} and release ${target.rewardValue} ${target.rewardToken}?`,
+      icon: 'question',
+      background: '#0a0a0f',
+      color: '#fff',
+      showCancelButton: true,
+      confirmButtonText: 'APPROVE & PAY',
+      confirmButtonColor: '#00ff66',
+      cancelButtonText: 'REJECT',
+      cancelButtonColor: '#ff3366',
+      customClass: { popup: 'cyber-border', confirmButton: 'cyber-btn-primary' }
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const { solanaBountyService } = await import('@/services/solana-bounty');
+
+        Swal.fire({
+          title: 'Awaiting Solana Signature',
+          text: 'Confirm the transaction in your Phantom wallet to release funds...',
+          allowOutsideClick: false,
+          didOpen: () => { Swal.showLoading(); }
+        });
+
+        // Parse local ID (mocked format)
+        const numericId = parseInt(bountyId.replace('bty-', '')) || Math.floor(Math.random() * 1000);
+        // We need hunter's address (mocking or real)
+        const hunterAddress = target.agentAddress || "11111111111111111111111111111111";
+
+        const txHash = await solanaBountyService.approveBounty(numericId, hunterAddress);
+
+        target.status = 'completed';
+        if (this.ctx.panels.bounties && 'updateBounties' in this.ctx.panels.bounties) {
+          (this.ctx.panels.bounties as any).updateBounties(this.ctx.activeBounties);
+        }
+
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'Bounty Paid!',
+          text: `TX: ${txHash.substring(0, 10)}...`,
+          showConfirmButton: false,
+          timer: 3000,
+          background: '#00ff66',
+          color: '#000'
+        });
+
+      } catch (err: any) {
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: 'Approval Failed',
+          text: err.message,
           showConfirmButton: false,
           timer: 3000,
           background: '#333',

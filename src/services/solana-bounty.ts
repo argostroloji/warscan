@@ -109,12 +109,12 @@ export class SolanaBountyService {
 
             this.provider = new AnchorProvider(
                 this.connection,
-                solWindow.solana,
+                solWindow.solana as any,
                 AnchorProvider.defaultOptions()
             );
             setProvider(this.provider);
 
-            this.program = new Program(IDL, BOUNTY_PROGRAM_ID, this.provider);
+            this.program = new Program(IDL as any, this.provider);
             return resp.publicKey.toString();
         }
         throw new Error('Phantom wallet not found. Please install the Phantom extension.');
@@ -166,12 +166,12 @@ export class SolanaBountyService {
         const creatorAta = await getAssociatedTokenAddress(mint, creator);
 
         try {
-            if (!this.program.methods) throw new Error("Program not initialized");
+            if (!this.program?.methods) throw new Error("Program not initialized");
 
             const tokenDecimals = 1_000_000;
             const amountBN = new BN(amount * tokenDecimals);
 
-            const txHash = await this.program.methods
+            const txHash = await (this.program as any).methods
                 .initializeBounty(new BN(bountyId), amountBN)
                 .accounts({
                     creator,
@@ -220,9 +220,9 @@ export class SolanaBountyService {
         const hunterAta = await getAssociatedTokenAddress(mint, hunter);
 
         try {
-            if (!this.program.methods) throw new Error("Program not initialized");
+            if (!this.program?.methods) throw new Error("Program not initialized");
 
-            const txHash = await this.program.methods
+            const txHash = await (this.program as any).methods
                 .approveReport()
                 .accounts({
                     creator,
