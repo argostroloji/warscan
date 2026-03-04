@@ -28,7 +28,7 @@ const FULL_PANELS: Record<string, PanelConfig> = {
   energy: { name: 'Energy & Resources', enabled: true, priority: 1 },
   gov: { name: 'Government', enabled: true, priority: 1 },
   thinktanks: { name: 'Think Tanks', enabled: true, priority: 1 },
-  clawnch: { name: 'Agent Finance', enabled: true, priority: 1 },
+  clawnch: { name: 'Agent Finance', enabled: false, priority: 1 },
   bounties: { name: 'Agent Bounties', enabled: true, priority: 1 },
   commodities: { name: 'Commodities', enabled: true, priority: 1 },
   markets: { name: 'Markets', enabled: true, priority: 1 },
