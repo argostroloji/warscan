@@ -123,6 +123,14 @@ export class BagsApiService {
 
             tokens.sort((a, b) => (b.marketCap || 0) - (a.marketCap || 0));
 
+            // Fill with fallbacks if needed
+            if (tokens.length < 15) {
+                const fallbacks = this.getFallbackTokens().filter(f => f.mint !== 'G2Lm29XTHAFAZbSKDLfhm53jK7jDFpkaFz3FguZBBAGS');
+                for (const f of fallbacks) {
+                    if (!tokens.find(t => t.mint === f.mint)) tokens.push(f);
+                }
+            }
+
             // Force Inject WARSCAN at the top
             const warscanToken = {
                 mint: 'G2Lm29XTHAFAZbSKDLfhm53jK7jDFpkaFz3FguZBBAGS',
@@ -167,6 +175,15 @@ export class BagsApiService {
                 createdAt: new Date().toISOString(),
                 url: BagsApiService.getTokenUrl(p.tokenAddress),
             }));
+
+            // Fill with fallbacks if needed
+            if (tokens.length < 15) {
+                const fallbacks = this.getFallbackTokens().filter(f => f.mint !== 'G2Lm29XTHAFAZbSKDLfhm53jK7jDFpkaFz3FguZBBAGS');
+                for (const f of fallbacks) {
+                    if (!tokens.find(t => t.mint === f.mint)) tokens.push(f);
+                }
+            }
+
             // Force Inject WARSCAN at the top
             const warscanToken = {
                 mint: 'G2Lm29XTHAFAZbSKDLfhm53jK7jDFpkaFz3FguZBBAGS',
