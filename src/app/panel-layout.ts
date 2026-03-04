@@ -96,6 +96,11 @@ export class PanelLayoutManager implements AppModule {
       <div class="header">
         <div class="header-left">
           <img src="/logo.jpg" class="header-logo" alt="WARSCAN">
+          <span class="ca-badge" id="caBadge" title="Click to copy Contract Address" onclick="navigator.clipboard.writeText('0xFEDAE2263C7AaC699c277d3F27b6E5B53feD8bA3').then(()=>{const el=this.querySelector('.ca-address');const orig=el.textContent;el.textContent='Copied!';setTimeout(()=>el.textContent=orig,1500)})">
+            <span class="ca-label">CA:</span>
+            <span class="ca-address">0xFEDA...8bA3</span>
+            <svg class="ca-copy-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </span>
           <span class="version">v${__APP_VERSION__}</span>${BETA_MODE ? '<span class="beta-badge">BETA</span>' : ''}
           <div id="web3-wallet-container" class="web3-wallet-container">
             <button id="connect-wallet-btn" class="cyber-btn">Connect Wallet</button>

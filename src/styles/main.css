@@ -16498,3 +16498,59 @@ body.has-breaking-alert .panels-grid {
   vertical-align: middle;
   border-radius: 4px;
 }
+
+/* CA Badge */
+.ca-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  margin-right: 8px;
+  background: rgba(255, 0, 102, 0.08);
+  border: 1px solid rgba(255, 0, 102, 0.3);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  vertical-align: middle;
+}
+
+.ca-badge:hover {
+  background: rgba(255, 0, 102, 0.15);
+  border-color: rgba(255, 0, 102, 0.5);
+  box-shadow: 0 0 8px rgba(255, 0, 102, 0.2);
+}
+
+.ca-badge:active {
+  transform: scale(0.97);
+}
+
+.ca-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--accent, #ff0066);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ca-address {
+  font-size: 11px;
+  color: var(--text-muted, #aaa);
+  font-weight: 500;
+}
+
+.ca-copy-icon {
+  color: var(--text-dim, #666);
+  transition: color 0.2s;
+  flex-shrink: 0;
+}
+
+.ca-badge:hover .ca-copy-icon {
+  color: var(--accent, #ff0066);
+}
+
+@media (max-width: 768px) {
+  .ca-badge {
+    display: none;
+  }
+}
