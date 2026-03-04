@@ -64,21 +64,35 @@ export class BagsPanel extends Panel {
   }
 
   private render(): void {
-    if (this.tokens.length === 0) {
-      this.setContent('<div class="empty-slate shimmer">Awaiting Solana token data...</div>');
-      return;
-    }
-
     let html = '';
 
-    // Header
+    // Header with Analytics Search
     html += `
-      <div class="bags-header panel-sub-header cyber-box">
-        <span class="cyber-label animate-pulse text-green">SOLANA TOKEN FEED</span>
-        <a href="https://bags.fm" target="_blank" class="bags-link">Powered by Bags 💰</a>
+      <div class="bags-header panel-sub-header cyber-box" style="flex-direction: column; align-items: stretch; gap: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span class="cyber-label animate-pulse text-green">SOLANA TOKEN FEED</span>
+          <a href="https://bags.fm" target="_blank" class="bags-link">Powered by Bags 💰</a>
+        </div>
+        
+        <!-- Bags Token Analytics -->
+        <div class="bags-search" style="display: flex; gap: 6px; margin-top: 4px;">
+          <input type="text" id="bags-mint-search" placeholder="Enter Token Mint for Fee Logs..." class="cyber-input" style="flex: 1; padding: 4px 8px; font-size: 0.8em;">
+          <button id="bags-mint-btn" class="cyber-btn" style="padding: 4px 8px; font-size: 0.8em; min-width: 60px;">CHECK</button>
+        </div>
+        <div id="bags-stats-container" style="display: none; padding: 8px; border: 1px dashed var(--accent); border-radius: 4px; font-size: 0.85em; margin-top: 4px; background: rgba(0,0,0,0.3);">
+          <!-- Stats injected here -->
+        </div>
       </div>
     `;
 
+    if (this.tokens.length === 0) {
+      html += '<div class="empty-slate shimmer">Awaiting Solana token data...</div>';
+      this.setContent(html);
+      this.setupSearchHandler();
+      return;
+    }
+
+    // Token List
     for (const token of this.tokens) {
       const isNew = Date.now() - new Date(token.createdAt).getTime() < 60 * 60 * 1000;
       const pulseClass = isNew ? 'animate-pulse glow-green' : '';
@@ -89,7 +103,6 @@ export class BagsPanel extends Panel {
 
       const fallbackImage = "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23222%22%2F%3E%3Ctext%20x%3D%2250%22%20y%3D%2255%22%20font-size%3D%2240%22%20text-anchor%3D%22middle%22%20fill%3D%22%23666%22%20font-family%3D%22monospace%22%3E%F0%9F%92%B0%3C%2Ftext%3E%3C%2Fsvg%3E";
 
-      // Use data-url attribute instead of inline onclick (CSP-safe)
       html += `
         <div class="data-row launch-row hover-glitch interactable" data-url="${token.url}" style="cursor:pointer">
           <div class="launch-image">
@@ -116,5 +129,61 @@ export class BagsPanel extends Panel {
     }
 
     this.setContent(html);
+    this.setupSearchHandler();
+  }
+
+  private setupSearchHandler() {
+    const input = document.getElementById('bags-mint-search') as HTMLInputElement;
+    const btn = document.getElementById('bags-mint-btn');
+    const container = document.getElementById('bags-stats-container');
+
+    if (!input || !btn || !container) return;
+
+    btn.addEventListener('click', async () => {
+      const mint = input.value.trim();
+      if (!mint) return;
+
+      container.style.display = 'block';
+      container.innerHTML = '<div class="loading-shimmer text-center" style="padding: 4px;">Loading analytics from Bags.fm...</div>';
+
+      try {
+        const { bagsApi, BagsApiService } = await import('@/services/bags-api');
+        const stats = await bagsApi.getTokenStats(mint);
+
+        let html = `
+          <div style="display:flex; justify-content:space-between; margin-bottom: 6px;">
+            <span class="text-dim">Lifetime Trading Fees:</span>
+            <span class="text-green glow-green" style="font-weight: bold;">${BagsApiService.lamportsToSol(stats.lifetimeFees)}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom: 6px;">
+            <span class="text-dim">Creators/Admins:</span>
+            <span style="color: var(--accent);">${stats.creators.length}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+            <span class="text-dim">Fee Claimers:</span>
+            <span style="color: var(--accent);">${stats.claimStats.length}</span>
+          </div>
+        `;
+
+        if (stats.claimStats.length > 0) {
+          const topClaimer = stats.claimStats.sort((a, b) => parseInt(b.totalClaimed) - parseInt(a.totalClaimed))[0];
+          if (topClaimer) {
+            html += `
+             <div style="display:flex; justify-content:space-between; margin-top: 6px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 4px;">
+               <span class="text-dim">Top Claimer:</span>
+               <span>${topClaimer.twitterUsername ? '@' + topClaimer.twitterUsername : topClaimer.wallet.slice(0, 6) + '...'} (${BagsApiService.lamportsToSol(topClaimer.totalClaimed)})</span>
+             </div>`;
+          }
+        }
+
+        container.innerHTML = html;
+      } catch (err) {
+        container.innerHTML = `<div class="text-red">Error fetching stats. Make sure this is a Bags token mint.</div>`;
+      }
+    });
+
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') btn.click();
+    });
   }
 }

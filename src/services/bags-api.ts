@@ -1,7 +1,10 @@
 /**
- * Bags.fm API Service - Solana token launch analytics
- * Uses DexScreener API for live token data (free, no API key needed)
+ * Bags.fm API Service - Full Solana token analytics integration
+ * Features: Live token feed (DexScreener), Fee analytics, Creator info, Claim stats
+ * Partner: argostroloji | Partner Key: 9btNzpXFhqTSqUfkEg6sLnDXBzHQFXWahebTBxjHzg9Z
  */
+
+// ── Types ──────────────────────────────────────────────────────
 
 export interface BagsTrendingToken {
     mint: string;
@@ -16,25 +19,78 @@ export interface BagsTrendingToken {
     url: string;
 }
 
+export interface BagsCreator {
+    username: string;
+    pfp: string;
+    royaltyBps: number;
+    isCreator: boolean;
+    wallet: string;
+    provider: string;
+    providerUsername: string;
+    twitterUsername?: string;
+    bagsUsername?: string;
+    isAdmin: boolean;
+}
+
+export interface BagsClaimStat {
+    username: string;
+    pfp: string;
+    royaltyBps: number;
+    isCreator: boolean;
+    wallet: string;
+    totalClaimed: string; // lamports as string
+    provider: string;
+    providerUsername: string;
+    twitterUsername?: string;
+    bagsUsername?: string;
+    isAdmin: boolean;
+}
+
+export interface BagsTokenStats {
+    lifetimeFees: string | null;  // lamports
+    creators: BagsCreator[];
+    claimStats: BagsClaimStat[];
+}
+
+// ── Constants ──────────────────────────────────────────────────
+
+const BAGS_API_BASE = 'https://public-api-v2.bags.fm/api/v1';
+const BAGS_API_KEY = 'bags_prod_MrTA6PLHSZXRG3D0DvpMLxpur7B0yxTN6vS3pLUJpww';
 const DEXSCREENER_SEARCH_URL = 'https://api.dexscreener.com/latest/dex/search?q=';
 
+// Partner integration
+export const BAGS_PARTNER_KEY = '9btNzpXFhqTSqUfkEg6sLnDXBzHQFXWahebTBxjHzg9Z';
+export const BAGS_REF_CODE = 'argostroloji';
+export const BAGS_REF_URL = `https://bags.fm/?ref=${BAGS_REF_CODE}`;
+
+// ── Service ────────────────────────────────────────────────────
+
 export class BagsApiService {
-    private cache: BagsTrendingToken[] | null = null;
-    private cacheTime = 0;
-    private readonly CACHE_TTL = 60_000; // 1 minute cache
+    private headers: Record<string, string>;
+    private tokenCache: BagsTrendingToken[] | null = null;
+    private tokenCacheTime = 0;
+    private statsCache: Map<string, { data: BagsTokenStats; time: number }> = new Map();
+    private readonly CACHE_TTL = 60_000;       // 1 minute token cache
+    private readonly STATS_CACHE_TTL = 120_000; // 2 minute stats cache
+
+    constructor() {
+        this.headers = {
+            'x-api-key': BAGS_API_KEY,
+            'Content-Type': 'application/json',
+        };
+    }
+
+    // ── Token Feed (DexScreener) ─────────────────────────────────
 
     /**
      * Fetch trending Solana tokens from DexScreener
-     * Searches for recently launched tokens on Meteora (Bags.fm uses Meteora pools)
      */
     async getTrendingTokens(): Promise<BagsTrendingToken[]> {
-        // Return cache if fresh
-        if (this.cache && Date.now() - this.cacheTime < this.CACHE_TTL) {
-            return this.cache;
+        if (this.tokenCache && Date.now() - this.tokenCacheTime < this.CACHE_TTL) {
+            return this.tokenCache;
         }
 
         try {
-            // Search DexScreener for Solana tokens on Meteora (Bags.fm platform)
             const res = await fetch(`${DEXSCREENER_SEARCH_URL}bags.fm`, {
                 signal: AbortSignal.timeout(8000),
             });
@@ -61,30 +117,25 @@ export class BagsApiService {
                     volume24h: pair.volume?.h24 ?? undefined,
                     marketCap: pair.marketCap ?? pair.fdv ?? undefined,
                     createdAt: pair.pairCreatedAt ? new Date(pair.pairCreatedAt).toISOString() : new Date().toISOString(),
-                    url: pair.url || `https://dexscreener.com/solana/${addr}`,
+                    url: BagsApiService.getTokenUrl(addr),
                 });
             }
 
-            // Sort by market cap descending
             tokens.sort((a, b) => (b.marketCap || 0) - (a.marketCap || 0));
 
-            // If no results from search, also try latest token profiles
             if (tokens.length === 0) {
                 return this.getLatestProfiles();
             }
 
-            this.cache = tokens.slice(0, 20);
-            this.cacheTime = Date.now();
-            return this.cache;
+            this.tokenCache = tokens.slice(0, 20);
+            this.tokenCacheTime = Date.now();
+            return this.tokenCache;
         } catch (err) {
-            console.warn('[BagsAPI] DexScreener fetch failed, trying latest profiles', err);
+            console.warn('[BagsAPI] DexScreener fetch failed', err);
             return this.getLatestProfiles();
         }
     }
 
-    /**
-     * Fallback: get latest token profiles from DexScreener
-     */
     private async getLatestProfiles(): Promise<BagsTrendingToken[]> {
         try {
             const res = await fetch('https://api.dexscreener.com/token-profiles/latest/v1', {
@@ -103,32 +154,122 @@ export class BagsApiService {
                 symbol: p.tokenAddress.slice(0, 6).toUpperCase(),
                 image: p.icon || '',
                 createdAt: new Date().toISOString(),
-                url: p.links?.[0]?.url || `https://dexscreener.com/solana/${p.tokenAddress}`,
+                url: BagsApiService.getTokenUrl(p.tokenAddress),
             }));
 
-            this.cache = tokens;
-            this.cacheTime = Date.now();
+            this.tokenCache = tokens;
+            this.tokenCacheTime = Date.now();
             return tokens;
-        } catch (err) {
-            console.warn('[BagsAPI] Latest profiles fetch failed, using fallback');
+        } catch {
             return this.getFallbackTokens();
         }
     }
 
-    /**
-     * Final fallback — static WARSCAN entry
-     */
     private getFallbackTokens(): BagsTrendingToken[] {
-        return [
-            {
-                mint: 'WARSCAN_MINT_PENDING',
-                name: 'WarScan',
-                symbol: 'WARSCAN',
-                image: 'https://pbs.twimg.com/profile_images/2028937335581065216/Ucf07N82_400x400.jpg',
-                createdAt: new Date().toISOString(),
-                url: 'https://bags.fm',
-            },
-        ];
+        return [{
+            mint: 'WARSCAN_MINT_PENDING',
+            name: 'WarScan',
+            symbol: 'WARSCAN',
+            image: 'https://pbs.twimg.com/profile_images/2028937335581065216/Ucf07N82_400x400.jpg',
+            createdAt: new Date().toISOString(),
+            url: BAGS_REF_URL,
+        }];
+    }
+
+    // ── Bags.fm API Endpoints ────────────────────────────────────
+
+    /**
+     * Get lifetime fees for a token
+     */
+    async getLifetimeFees(tokenMint: string): Promise<string | null> {
+        try {
+            const res = await fetch(
+                `${BAGS_API_BASE}/token-launch/lifetime-fees?tokenMint=${tokenMint}`,
+                { headers: this.headers, signal: AbortSignal.timeout(8000) }
+            );
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            return data.success ? (data.response || '0') : null;
+        } catch (err) {
+            console.warn('[BagsAPI] Failed to fetch lifetime fees', err);
+            return null;
+        }
+    }
+
+    /**
+     * Get token creators/deployers
+     */
+    async getTokenCreators(tokenMint: string): Promise<BagsCreator[]> {
+        try {
+            const res = await fetch(
+                `${BAGS_API_BASE}/token-launch/creator/v3?tokenMint=${tokenMint}`,
+                { headers: this.headers, signal: AbortSignal.timeout(8000) }
+            );
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            return data.success ? (data.response || []) : [];
+        } catch (err) {
+            console.warn('[BagsAPI] Failed to fetch creators', err);
+            return [];
+        }
+    }
+
+    /**
+     * Get claim statistics for a token
+     */
+    async getClaimStats(tokenMint: string): Promise<BagsClaimStat[]> {
+        try {
+            const res = await fetch(
+                `${BAGS_API_BASE}/token-launch/claim-stats?tokenMint=${tokenMint}`,
+                { headers: this.headers, signal: AbortSignal.timeout(8000) }
+            );
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            return data.success ? (data.response || []) : [];
+        } catch (err) {
+            console.warn('[BagsAPI] Failed to fetch claim stats', err);
+            return [];
+        }
+    }
+
+    /**
+     * Get full token stats (fees + creators + claim stats)
+     * Cached for 2 minutes per token
+     */
+    async getTokenStats(tokenMint: string): Promise<BagsTokenStats> {
+        const cached = this.statsCache.get(tokenMint);
+        if (cached && Date.now() - cached.time < this.STATS_CACHE_TTL) {
+            return cached.data;
+        }
+
+        const [lifetimeFees, creators, claimStats] = await Promise.all([
+            this.getLifetimeFees(tokenMint),
+            this.getTokenCreators(tokenMint),
+            this.getClaimStats(tokenMint),
+        ]);
+
+        const stats: BagsTokenStats = { lifetimeFees, creators, claimStats };
+        this.statsCache.set(tokenMint, { data: stats, time: Date.now() });
+        return stats;
+    }
+
+    // ── Utility ──────────────────────────────────────────────────
+
+    /**
+     * Format lamports to SOL with display string
+     */
+    static lamportsToSol(lamports: string | null): string {
+        if (!lamports || lamports === '0') return '0 SOL';
+        const sol = parseInt(lamports) / 1_000_000_000;
+        if (sol < 0.001) return `${sol.toExponential(2)} SOL`;
+        return `${sol.toFixed(4)} SOL`;
+    }
+
+    /**
+     * Get partner-referred Bags.fm URL for a token
+     */
+    static getTokenUrl(tokenMint: string): string {
+        return `https://bags.fm/${tokenMint}?ref=${BAGS_REF_CODE}`;
     }
 }
 
