@@ -289,38 +289,7 @@ export class BagsApiService {
      * Cached for 2 minutes per token
      */
     async getTokenStats(tokenMint: string): Promise<BagsTokenStats> {
-        if (tokenMint === 'G2Lm29XTHAFAZbSKDLfhm53jK7jDFpkaFz3FguZBBAGS') {
-            return {
-                lifetimeFees: "12500000000", // 12.5 SOL
-                creators: [{
-                    username: 'WarScanTeam',
-                    pfp: 'https://pbs.twimg.com/profile_images/2028937335581065216/Ucf07N82_400x400.jpg',
-                    royaltyBps: 500,
-                    isCreator: true,
-                    wallet: 'WARSCAN_CREATOR_WALLET',
-                    provider: 'twitter',
-                    providerUsername: 'warscanteam',
-                    isAdmin: true
-                }],
-                claimStats: []
-            };
-        }
-
-        const cached = this.statsCache.get(tokenMint);
-        if (cached && Date.now() - cached.time < this.STATS_CACHE_TTL) {
-            return cached.data;
-        }
-
-        const [lifetimeFees, creators, claimStats] = await Promise.all([
-            this.getLifetimeFees(tokenMint),
-            this.getTokenCreators(tokenMint),
-            this.getClaimStats(tokenMint),
-        ]);
-
-        const stats: BagsTokenStats = { lifetimeFees, creators, claimStats };
-        this.statsCache.set(tokenMint, { data: stats, time: Date.now() });
-
-        // Push user searched token dynamically to list
+        // 1. Push user searched token dynamically to list (Do this FIRST before any early returns)
         if (!this.tokenCache?.find(t => t.mint === tokenMint)) {
             let newToken: BagsTrendingToken | null = null;
             try {
@@ -361,6 +330,38 @@ export class BagsApiService {
             this.tokenCache.unshift(newToken);
             window.dispatchEvent(new CustomEvent('bags-tokens-updated', { detail: this.tokenCache }));
         }
+
+        // 2. Return Stats (Mock for WARSCAN, or Live data)
+        if (tokenMint === 'G2Lm29XTHAFAZbSKDLfhm53jK7jDFpkaFz3FguZBBAGS') {
+            return {
+                lifetimeFees: "12500000000", // 12.5 SOL
+                creators: [{
+                    username: 'WarScanTeam',
+                    pfp: 'https://pbs.twimg.com/profile_images/2028937335581065216/Ucf07N82_400x400.jpg',
+                    royaltyBps: 500,
+                    isCreator: true,
+                    wallet: 'WARSCAN_CREATOR_WALLET',
+                    provider: 'twitter',
+                    providerUsername: 'warscanteam',
+                    isAdmin: true
+                }],
+                claimStats: []
+            };
+        }
+
+        const cached = this.statsCache.get(tokenMint);
+        if (cached && Date.now() - cached.time < this.STATS_CACHE_TTL) {
+            return cached.data;
+        }
+
+        const [lifetimeFees, creators, claimStats] = await Promise.all([
+            this.getLifetimeFees(tokenMint),
+            this.getTokenCreators(tokenMint),
+            this.getClaimStats(tokenMint),
+        ]);
+
+        const stats: BagsTokenStats = { lifetimeFees, creators, claimStats };
+        this.statsCache.set(tokenMint, { data: stats, time: Date.now() });
 
         return stats;
     }
