@@ -184,6 +184,12 @@ export class BagsPanel extends Panel {
         }
 
         container.innerHTML = html;
+
+        // Force re-render token list if API added the searched token to cache
+        if ((bagsApi as any).tokenCache) {
+          this.renderTokens((bagsApi as any).tokenCache);
+        }
+
       } catch (err) {
         container.innerHTML = `<div class="text-red">Error fetching stats. Make sure this is a Bags token mint.</div>`;
       }
