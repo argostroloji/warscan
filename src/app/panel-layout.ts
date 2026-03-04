@@ -87,6 +87,10 @@ export class PanelLayoutManager implements AppModule {
           <img src="/logo.jpg" class="header-logo" alt="WARSCAN">
 
           <span class="version">v${__APP_VERSION__}</span>${BETA_MODE ? '<span class="beta-badge">BETA</span>' : ''}
+          <button id="ca-copy-btn" class="cyber-btn" title="Copy WARSCAN CA: G2Lm29XTHAFAZbSKDLfhm53jK7jDFpkaFz3FguZBBAGS" style="margin-left: 10px; font-size: 0.75em; padding: 2px 8px; border: 1px solid #14F195; color: #14F195; background: rgba(20, 241, 149, 0.1); display: flex; align-items: center; gap: 4px; border-radius: 4px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            <span id="ca-text">CA: G2Lm...BAGS</span>
+          </button>
           <div id="web3-wallet-container" class="web3-wallet-container">
             <button id="connect-wallet-btn" class="cyber-btn">Connect Wallet</button>
           </div>
@@ -668,6 +672,28 @@ export class PanelLayoutManager implements AppModule {
 
     this.applyPanelSettings();
     this.applyInitialUrlState();
+
+    // CA Copy Button Logic Setup
+    document.getElementById('ca-copy-btn')?.addEventListener('click', async (e) => {
+      const btn = e.currentTarget as HTMLButtonElement;
+      const textSpan = document.getElementById('ca-text');
+      const ca = 'G2Lm29XTHAFAZbSKDLfhm53jK7jDFpkaFz3FguZBBAGS';
+
+      try {
+        await navigator.clipboard.writeText(ca);
+        if (textSpan) textSpan.innerText = 'Copied!';
+        btn.style.borderColor = '#fff';
+        btn.style.color = '#fff';
+
+        setTimeout(() => {
+          if (textSpan) textSpan.innerText = 'CA: G2Lm...BAGS';
+          btn.style.borderColor = '#14F195';
+          btn.style.color = '#14F195';
+        }, 2000);
+      } catch (err) {
+        console.error('Failed to copy CA', err);
+      }
+    });
 
     window.addEventListener('map-bounty-click', (e: Event) => {
       const customEvent = e as CustomEvent<{ lat: number, lng: number }>;
