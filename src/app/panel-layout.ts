@@ -705,14 +705,14 @@ export class PanelLayoutManager implements AppModule {
       this.promptBountyResolution(customEvent.detail.bountyId);
     });
 
-    window.addEventListener('bounty-location-click', (e: Event) => {
-      const customEvent = e as CustomEvent<{ lat: number, lng: number }>;
-      this.ctx.map?.setCenter(customEvent.detail.lat, customEvent.detail.lng, 6);
-    });
-
     window.addEventListener('submit-bounty-report', (e: Event) => {
       const customEvent = e as CustomEvent<{ bountyId: string, reportUrl: string }>;
       this.executeBountySubmission(customEvent.detail.bountyId, customEvent.detail.reportUrl);
+    });
+
+    window.addEventListener('bounty-location-click', (e: Event) => {
+      const customEvent = e as CustomEvent<{ lat: number, lng: number }>;
+      this.ctx.map?.setCenter(customEvent.detail.lat, customEvent.detail.lng, 6);
     });
 
     // Bounty Toggle logic
