@@ -28,17 +28,6 @@ import {
 } from '@/components';
 import { SatelliteFiresPanel } from '@/components/SatelliteFiresPanel';
 import { debounce, saveToStorage } from '@/utils';
-import { BrowserProvider, Contract, parseEther } from 'ethers';
-import EscrowArtifact from '@/contracts/WarScanBountyEscrow.json';
-
-const ESCROW_ADDRESS = (import.meta as any).env.VITE_ESCROW_ADDRESS || "0x8888888888888888888888888888888888888888";
-const WARSCAN_TOKEN_ADDRESS = (import.meta as any).env.VITE_WARSCAN_TOKEN_ADDRESS || "0xFEDAE2263C7AaC699c277d3F27b6E5B53feD8bA3";
-
-const ERC20_ABI = [
-  "function approve(address spender, uint256 amount) public returns (bool)",
-  "function allowance(address owner, address spender) public view returns (uint256)",
-  "function balanceOf(address account) public view returns (uint256)"
-];
 import { escapeHtml } from '@/utils/sanitize';
 import {
   FEEDS,
@@ -792,50 +781,34 @@ export class PanelLayoutManager implements AppModule {
 
       try {
         let transactionHash = "mock-tx-hash";
+        const Swal = (await import('sweetalert2')).default;
 
-        if ((window as any).ethereum) {
-          const provider = new BrowserProvider((window as any).ethereum);
-          const signer = await provider.getSigner();
-          const escrowContract = new Contract(ESCROW_ADDRESS, EscrowArtifact.abi, signer);
-
-          const Swal = (await import('sweetalert2')).default;
-          // 1. Approval Step (if token is not native)
-          if (tok === 'WARSCAN') {
-            const tokenContract = new Contract(WARSCAN_TOKEN_ADDRESS, ERC20_ABI, signer);
-            const rewardWei = parseEther(rew.toString());
-
-            Swal.fire({
-              title: 'Approving Token Usage',
-              text: `Permitting escrow to hold ${rew} WARSCAN...`,
-              allowOutsideClick: false,
-              didOpen: () => { Swal.showLoading(); }
-            });
-
-            const approveTx = await (tokenContract as any).approve(ESCROW_ADDRESS, rewardWei);
-            await approveTx.wait();
-          }
+        try {
+          const { solanaBountyService } = await import('@/services/solana-bounty');
 
           Swal.fire({
-            title: 'Awaiting Web3 Signature',
-            text: 'Please confirm the bounty deposit in your wallet.',
+            title: 'Connecting to Solana',
+            text: 'Please connect your Phantom wallet...',
             allowOutsideClick: false,
             didOpen: () => { Swal.showLoading(); }
           });
 
-          // Send the real Web3 transaction
-          const tx = await (escrowContract as any).createBounty(desc, parseEther(rew.toString()));
+          await solanaBountyService.connectWallet();
 
           Swal.fire({
-            title: 'Broadcasting Transaction',
-            text: 'Waiting for network confirmation...',
+            title: 'Awaiting Solana Signature',
+            text: `Confirm the bounty deposit of ${rew} ${tok} in your wallet.`,
             allowOutsideClick: false,
             didOpen: () => { Swal.showLoading(); }
           });
 
-          const receipt = await tx.wait();
-          transactionHash = receipt.hash;
-        } else {
-          // Fallback to mock behavior if no wallet is connected
+          // Convert to a number id
+          const numericId = Math.floor(Math.random() * 1000000);
+          transactionHash = await solanaBountyService.placeBounty(numericId, rew);
+
+        } catch (web3Err: any) {
+          console.warn("Solana Web3 Failed, falling back to mock:", web3Err);
+          // Fallback to mock behavior if no wallet is connected or an error occurs
           const signed = await BankrWidget.promptSignature(rew, 'Deploy Intelligence Contract');
           if (!signed) throw new Error("User Rejected");
         }
