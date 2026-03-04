@@ -519,8 +519,8 @@ export class SearchManager implements AppModule {
     console.log(`[Search] Indexing ${newsItems.length} news items (allNews total: ${this.ctx.allNews.length})`);
     this.ctx.searchModal.registerSource('news', newsItems);
 
-    if (this.ctx.latestClawnchLaunches.length > 0) {
-      this.ctx.searchModal.registerSource('token', this.ctx.latestClawnchLaunches.map(l => ({
+    if (this.ctx.latestBagsTokens.length > 0) {
+      this.ctx.searchModal.registerSource('token', this.ctx.latestBagsTokens.map(l => ({
         id: l.symbol,
         title: `${l.name} (${l.symbol})`,
         subtitle: `Agent: ${l.agentName}`,

@@ -71,7 +71,7 @@ export interface AppContext {
   allNews: NewsItem[];
   newsByCategory: Record<string, NewsItem[]>;
   latestMarkets: MarketData[];
-  latestClawnchLaunches: any[];
+  latestBagsTokens: any[];
   latestClusters: ClusteredEvent[];
   intelligenceCache: IntelligenceCache;
   cyberThreatsCache: CyberThreat[] | null;

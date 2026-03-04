@@ -1552,23 +1552,23 @@
 }
 
 /* ----------------------------------------------------------
-   Clawnch Panel (Agent Finance)
+   Bags Panel (Bags Finance)
    ---------------------------------------------------------- */
-.clawnch-panel-content {
+.bags-panel-content {
   padding: 8px;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.clawnch-header {
+.bags-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 4px;
 }
 
-.clawnch-link {
+.bags-link {
   font-size: 10px;
   color: var(--accent);
   text-decoration: none;
@@ -1576,7 +1576,7 @@
   transition: opacity 0.2s;
 }
 
-.clawnch-link:hover {
+.bags-link:hover {
   opacity: 0.8;
   text-decoration: underline;
 }

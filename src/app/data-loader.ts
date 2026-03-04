@@ -896,7 +896,7 @@ export class DataLoaderManager implements AppModule {
   async loadBagsData(): Promise<void> {
     try {
       const tokens = await bagsApi.getTrendingTokens();
-      this.ctx.latestClawnchLaunches = tokens as any;
+      this.ctx.latestBagsTokens = tokens as any;
 
       if (this.ctx.panels['bags']) {
         (this.ctx.panels['bags'] as any).renderTokens?.(tokens);

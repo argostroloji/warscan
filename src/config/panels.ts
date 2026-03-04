@@ -28,7 +28,7 @@ const FULL_PANELS: Record<string, PanelConfig> = {
   energy: { name: 'Energy & Resources', enabled: true, priority: 1 },
   gov: { name: 'Government', enabled: true, priority: 1 },
   thinktanks: { name: 'Think Tanks', enabled: true, priority: 1 },
-  clawnch: { name: 'Agent Finance', enabled: false, priority: 1 },
+  bags: { name: 'Bags Finance', enabled: false, priority: 1 },
   bounties: { name: 'Agent Bounties', enabled: true, priority: 1 },
   commodities: { name: 'Commodities', enabled: true, priority: 1 },
   markets: { name: 'Markets', enabled: true, priority: 1 },
@@ -187,7 +187,7 @@ const TECH_PANELS: Record<string, PanelConfig> = {
   dev: { name: 'Developer Community', enabled: true, priority: 2 },
   github: { name: 'GitHub Trending', enabled: true, priority: 1 },
   ipo: { name: 'IPO & SPAC', enabled: true, priority: 2 },
-  clawnch: { name: 'Agent Finance', enabled: true, priority: 2 },
+  bags: { name: 'Bags Finance', enabled: true, priority: 2 },
   bounties: { name: 'Agent Bounties', enabled: true, priority: 2 },
   funding: { name: 'Funding & VC', enabled: true, priority: 1 },
   producthunt: { name: 'Product Hunt', enabled: true, priority: 1 },
@@ -338,7 +338,7 @@ const FINANCE_PANELS: Record<string, PanelConfig> = {
   'gcc-investments': { name: 'GCC Investments', enabled: true, priority: 2 },
   gccNews: { name: 'GCC Business News', enabled: true, priority: 2 },
   'gulf-economies': { name: 'Gulf Economies', enabled: true, priority: 1 },
-  clawnch: { name: 'Agent Finance', enabled: true, priority: 2 },
+  bags: { name: 'Bags Finance', enabled: true, priority: 2 },
   bounties: { name: 'Agent Bounties', enabled: true, priority: 2 },
   'world-clock': { name: 'World Clock', enabled: true, priority: 2 },
   monitors: { name: 'My Monitors', enabled: true, priority: 2 },
@@ -612,7 +612,7 @@ export const PANEL_CATEGORY_MAP: Record<string, { labelKey: string; panelKeys: s
   },
   marketsFinance: {
     labelKey: 'header.panelCatMarketsFinance',
-    panelKeys: ['commodities', 'markets', 'economic', 'trade-policy', 'supply-chain', 'finance', 'clawnch', 'bounties', 'macro-signals', 'gulf-economies', 'etf-flows', 'stablecoins', 'crypto', 'heatmap'],
+    panelKeys: ['commodities', 'markets', 'economic', 'trade-policy', 'supply-chain', 'finance', 'bags', 'bounties', 'macro-signals', 'gulf-economies', 'etf-flows', 'stablecoins', 'crypto', 'heatmap'],
     variants: ['full'],
   },
   topical: {
@@ -644,14 +644,14 @@ export const PANEL_CATEGORY_MAP: Record<string, { labelKey: string; panelKeys: s
   },
   techMarkets: {
     labelKey: 'header.panelCatMarkets',
-    panelKeys: ['markets', 'finance', 'crypto', 'economic', 'clawnch', 'bounties', 'macro-signals', 'etf-flows', 'stablecoins', 'layoffs', 'monitors', 'world-clock'],
+    panelKeys: ['markets', 'finance', 'crypto', 'economic', 'bags', 'bounties', 'macro-signals', 'etf-flows', 'stablecoins', 'layoffs', 'monitors', 'world-clock'],
     variants: ['tech'],
   },
 
   // Finance variant
   finMarkets: {
     labelKey: 'header.panelCatMarkets',
-    panelKeys: ['markets', 'markets-news', 'heatmap', 'macro-signals', 'analysis', 'clawnch', 'bounties'],
+    panelKeys: ['markets', 'markets-news', 'heatmap', 'macro-signals', 'analysis', 'bags', 'bounties'],
     variants: ['finance'],
   },
   fixedIncomeFx: {

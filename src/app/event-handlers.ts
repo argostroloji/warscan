@@ -477,7 +477,7 @@ export class EventHandlerManager implements AppModule {
     this.ctx.exportPanel = new ExportPanel(() => ({
       news: this.ctx.latestClusters.length > 0 ? this.ctx.latestClusters : this.ctx.allNews,
       markets: this.ctx.latestMarkets,
-      bags: this.ctx.latestClawnchLaunches,
+      bags: this.ctx.latestBagsTokens,
       timestamp: Date.now(),
     }));
 
@@ -554,7 +554,7 @@ export class EventHandlerManager implements AppModule {
         timestamp: Date.now(),
         events: this.ctx.latestClusters,
         marketPrices,
-        bags: this.ctx.latestClawnchLaunches,
+        bags: this.ctx.latestBagsTokens,
         hotspotLevels: this.ctx.map?.getHotspotLevels() ?? {}
       });
     };
@@ -571,10 +571,10 @@ export class EventHandlerManager implements AppModule {
     const events = snapshot.events as ClusteredEvent[];
     this.ctx.latestClusters = events;
 
-    this.ctx.latestClawnchLaunches = snapshot.bags as any || [];
-    if (this.ctx.latestClawnchLaunches.length > 0) {
+    this.ctx.latestBagsTokens = snapshot.bags as any || [];
+    if (this.ctx.latestBagsTokens.length > 0) {
       if (this.ctx.panels['bags']) {
-        (this.ctx.panels['bags'] as any).renderTokens?.(this.ctx.latestClawnchLaunches);
+        (this.ctx.panels['bags'] as any).renderTokens?.(this.ctx.latestBagsTokens);
       }
     }
     this.ctx.map?.setHotspotLevels(snapshot.hotspotLevels);

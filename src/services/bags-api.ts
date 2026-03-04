@@ -1,6 +1,5 @@
 /**
  * Bags.fm API Service - Solana token launch analytics
- * Replaces the old Clawnch API service
  */
 
 export interface BagsToken {

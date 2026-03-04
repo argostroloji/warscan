@@ -244,7 +244,7 @@ export class App {
       allNews: [],
       newsByCategory: {},
       latestMarkets: [],
-      latestClawnchLaunches: [],
+      latestBagsTokens: [],
       latestClusters: [],
       activeBounties: [],
       intelligenceCache: {},
