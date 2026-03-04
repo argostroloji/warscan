@@ -1,36 +1,8 @@
 /**
  * Bags.fm API Service - Solana token launch analytics
+ * Uses DexScreener API for live token data (free, no API key needed)
  */
 
-export interface BagsToken {
-    tokenMint: string;
-    name: string;
-    symbol: string;
-    description: string;
-    image: string;
-    website?: string;
-    twitter?: string;
-    telegram?: string;
-    status: string;
-    createdAt: string;
-    updatedAt: string;
-    uri?: string;
-    launchWallet?: string;
-    launchSignature?: string;
-}
-
-export interface BagsTokenFees {
-    tokenMint: string;
-    lifetimeFees: string; // lamports as string
-}
-
-export interface BagsApiResponse<T> {
-    success: boolean;
-    response?: T;
-    error?: string;
-}
-
-// Trending tokens from bags.fm website scrape/proxy 
 export interface BagsTrendingToken {
     mint: string;
     name: string;
@@ -44,47 +16,107 @@ export interface BagsTrendingToken {
     url: string;
 }
 
-const BAGS_API_BASE = 'https://public-api-v2.bags.fm/api/v1';
-const BAGS_API_KEY = 'bags_prod_MrTA6PLHSZXRG3D0DvpMLxpur7B0yxTN6vS3pLUJpww';
+const DEXSCREENER_SEARCH_URL = 'https://api.dexscreener.com/latest/dex/search?q=';
 
 export class BagsApiService {
-    private headers: Record<string, string>;
-
-    constructor() {
-        this.headers = {
-            'x-api-key': BAGS_API_KEY,
-            'Content-Type': 'application/json',
-        };
-    }
+    private cache: BagsTrendingToken[] | null = null;
+    private cacheTime = 0;
+    private readonly CACHE_TTL = 60_000; // 1 minute cache
 
     /**
-     * Fetch token lifetime fees
+     * Fetch trending Solana tokens from DexScreener
+     * Searches for recently launched tokens on Meteora (Bags.fm uses Meteora pools)
      */
-    async getTokenLifetimeFees(tokenMint: string): Promise<string | null> {
+    async getTrendingTokens(): Promise<BagsTrendingToken[]> {
+        // Return cache if fresh
+        if (this.cache && Date.now() - this.cacheTime < this.CACHE_TTL) {
+            return this.cache;
+        }
+
         try {
-            const res = await fetch(
-                `${BAGS_API_BASE}/token-launch/lifetime-fees?tokenMint=${tokenMint}`,
-                { headers: this.headers }
-            );
+            // Search DexScreener for Solana tokens on Meteora (Bags.fm platform)
+            const res = await fetch(`${DEXSCREENER_SEARCH_URL}bags.fm`, {
+                signal: AbortSignal.timeout(8000),
+            });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const data: BagsApiResponse<string> = await res.json();
-            return data.success ? (data.response || '0') : null;
+            const data = await res.json();
+
+            const pairs = data.pairs || [];
+            const seen = new Set<string>();
+            const tokens: BagsTrendingToken[] = [];
+
+            for (const pair of pairs) {
+                if (pair.chainId !== 'solana') continue;
+                const addr = pair.baseToken?.address;
+                if (!addr || seen.has(addr)) continue;
+                seen.add(addr);
+
+                tokens.push({
+                    mint: addr,
+                    name: pair.baseToken.name || 'Unknown',
+                    symbol: pair.baseToken.symbol || '???',
+                    image: pair.info?.imageUrl || '',
+                    price: pair.priceUsd ? parseFloat(pair.priceUsd) : undefined,
+                    priceChange24h: pair.priceChange?.h24 ?? undefined,
+                    volume24h: pair.volume?.h24 ?? undefined,
+                    marketCap: pair.marketCap ?? pair.fdv ?? undefined,
+                    createdAt: pair.pairCreatedAt ? new Date(pair.pairCreatedAt).toISOString() : new Date().toISOString(),
+                    url: pair.url || `https://dexscreener.com/solana/${addr}`,
+                });
+            }
+
+            // Sort by market cap descending
+            tokens.sort((a, b) => (b.marketCap || 0) - (a.marketCap || 0));
+
+            // If no results from search, also try latest token profiles
+            if (tokens.length === 0) {
+                return this.getLatestProfiles();
+            }
+
+            this.cache = tokens.slice(0, 20);
+            this.cacheTime = Date.now();
+            return this.cache;
         } catch (err) {
-            console.warn('[BagsAPI] Failed to fetch lifetime fees', err);
-            return null;
+            console.warn('[BagsAPI] DexScreener fetch failed, trying latest profiles', err);
+            return this.getLatestProfiles();
         }
     }
 
     /**
-     * Get tokens to display in the Bags panel.
-     * Returns WARSCAN token info + any future tokens.
+     * Fallback: get latest token profiles from DexScreener
      */
-    async getTrendingTokens(): Promise<BagsTrendingToken[]> {
-        return this.getFallbackTokens();
+    private async getLatestProfiles(): Promise<BagsTrendingToken[]> {
+        try {
+            const res = await fetch('https://api.dexscreener.com/token-profiles/latest/v1', {
+                signal: AbortSignal.timeout(8000),
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const profiles = await res.json();
+
+            const solanaProfiles = (profiles || [])
+                .filter((p: any) => p.chainId === 'solana')
+                .slice(0, 15);
+
+            const tokens: BagsTrendingToken[] = solanaProfiles.map((p: any) => ({
+                mint: p.tokenAddress,
+                name: p.description?.slice(0, 30) || p.tokenAddress.slice(0, 8),
+                symbol: p.tokenAddress.slice(0, 6).toUpperCase(),
+                image: p.icon || '',
+                createdAt: new Date().toISOString(),
+                url: p.links?.[0]?.url || `https://dexscreener.com/solana/${p.tokenAddress}`,
+            }));
+
+            this.cache = tokens;
+            this.cacheTime = Date.now();
+            return tokens;
+        } catch (err) {
+            console.warn('[BagsAPI] Latest profiles fetch failed, using fallback');
+            return this.getFallbackTokens();
+        }
     }
 
     /**
-     * Fallback data when API is unavailable
+     * Final fallback — static WARSCAN entry
      */
     private getFallbackTokens(): BagsTrendingToken[] {
         return [
