@@ -115,6 +115,9 @@ export class PanelLayoutManager implements AppModule {
           <button id="bounties-toggle-btn" class="cyber-btn" title="Toggle Bounty Board" style="margin-left: 8px; font-size: 0.75em; border: 1px solid var(--accent); color: var(--accent); background: rgba(255, 0, 102, 0.1);">
             🎯 BOUNTIES
           </button>
+          <button id="bags-toggle-btn" class="cyber-btn" title="Toggle Bags Finance" style="margin-left: 4px; font-size: 0.75em; border: 1px solid #9945FF; color: #9945FF; background: rgba(153, 69, 255, 0.1);">
+            💰 BAGS
+          </button>
           <div class="region-selector">
             <select id="regionSelect" class="region-select">
               <option value="global">${t('components.deckgl.views.global')}</option>
@@ -706,6 +709,20 @@ export class PanelLayoutManager implements AppModule {
         // Persist setting
         if (this.ctx.panelSettings['bounties']) {
           this.ctx.panelSettings['bounties'].enabled = isHidden;
+          saveToStorage(STORAGE_KEYS.panels, this.ctx.panelSettings);
+        }
+      }
+    });
+
+    // Bags Toggle logic
+    document.getElementById('bags-toggle-btn')?.addEventListener('click', () => {
+      const panel = this.ctx.panels['bags'];
+      if (panel) {
+        const isHidden = panel.getElement().classList.contains('hidden');
+        panel.toggle(isHidden);
+        // Persist setting
+        if (this.ctx.panelSettings['bags']) {
+          this.ctx.panelSettings['bags'].enabled = isHidden;
           saveToStorage(STORAGE_KEYS.panels, this.ctx.panelSettings);
         }
       }
