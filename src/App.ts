@@ -555,7 +555,7 @@ export class App {
     if (SITE_VARIANT !== 'happy') {
       this.refreshScheduler.registerAll([
         { name: 'markets', fn: () => this.dataLoader.loadMarkets(), intervalMs: REFRESH_INTERVALS.markets },
-        { name: 'clawnch', fn: () => this.dataLoader.loadClawnchData(), intervalMs: 30000 },
+        { name: 'bags', fn: () => this.dataLoader.loadBagsData(), intervalMs: 30000 },
         { name: 'pizzint', fn: () => this.dataLoader.loadPizzInt(), intervalMs: 10 * 60 * 1000 },
         { name: 'natural', fn: () => this.dataLoader.loadNatural(), intervalMs: 60 * 60 * 1000, condition: () => this.state.mapLayers.natural },
         { name: 'weather', fn: () => this.dataLoader.loadWeatherAlerts(), intervalMs: 10 * 60 * 1000, condition: () => this.state.mapLayers.weather },
