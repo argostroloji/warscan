@@ -16,6 +16,13 @@ export class BagsPanel extends Panel {
         window.open(row.dataset.url, '_blank');
       }
     });
+
+    // Listen for dynamically injected tokens from searches
+    window.addEventListener('bags-tokens-updated', ((e: CustomEvent<BagsTrendingToken[]>) => {
+      if (e.detail) {
+        this.renderTokens(e.detail);
+      }
+    }) as EventListener);
   }
 
   renderTokens(tokens: BagsTrendingToken[]): void {

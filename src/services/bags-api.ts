@@ -319,6 +319,35 @@ export class BagsApiService {
 
         const stats: BagsTokenStats = { lifetimeFees, creators, claimStats };
         this.statsCache.set(tokenMint, { data: stats, time: Date.now() });
+
+        // Push user searched token dynamically to list
+        if (!this.tokenCache?.find(t => t.mint === tokenMint)) {
+            try {
+                const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokenMint}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.pairs?.[0] && data.pairs[0].chainId === 'solana') {
+                        const pair = data.pairs[0];
+                        const newToken: BagsTrendingToken = {
+                            mint: pair.baseToken.address,
+                            name: pair.baseToken.name || 'Searched Token',
+                            symbol: pair.baseToken.symbol || '???',
+                            image: pair.info?.imageUrl || '',
+                            price: pair.priceUsd ? parseFloat(pair.priceUsd) : undefined,
+                            priceChange24h: pair.priceChange?.h24 ?? undefined,
+                            volume24h: pair.volume?.h24 ?? undefined,
+                            marketCap: pair.marketCap ?? pair.fdv ?? undefined,
+                            createdAt: pair.pairCreatedAt ? new Date(pair.pairCreatedAt).toISOString() : new Date().toISOString(),
+                            url: BagsApiService.getTokenUrl(pair.baseToken.address),
+                        };
+                        this.tokenCache = this.tokenCache || [];
+                        this.tokenCache.unshift(newToken);
+                        window.dispatchEvent(new CustomEvent('bags-tokens-updated', { detail: this.tokenCache }));
+                    }
+                }
+            } catch (e) { /* ignore fetching failures natively */ }
+        }
+
         return stats;
     }
 
