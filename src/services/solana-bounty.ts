@@ -95,8 +95,8 @@ export class SolanaBountyService {
     private provider: AnchorProvider | null = null;
     private program: Program | null = null;
 
-    // To be updated when user launches token
-    private static WARSCAN_MINT = new PublicKey('11111111111111111111111111111111');
+    // The main WARSCAN token mint address (CA)
+    private static WARSCAN_MINT = new PublicKey('G2Lm29XTHAFAZbSKDLfhm53jK7jDFpkaFz3FguZBBAGS');
 
     constructor() {
         this.connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');

@@ -676,7 +676,7 @@ export class PanelLayoutManager implements AppModule {
 
     window.addEventListener('approve-bounty-click', (e: Event) => {
       const customEvent = e as CustomEvent<{ bountyId: string, agentAddress: string, reward: string, contractId?: number }>;
-      this.executeBountyApproval(customEvent.detail.bountyId, customEvent.detail.agentAddress, customEvent.detail.reward, customEvent.detail.contractId);
+      this.promptBountyResolution(customEvent.detail.bountyId);
     });
 
     window.addEventListener('bounty-location-click', (e: Event) => {
@@ -779,9 +779,23 @@ export class PanelLayoutManager implements AppModule {
       if (!this.ctx.activeBounties) this.ctx.activeBounties = [];
       const { desc, rew, tok } = result.value;
 
+      // BETA LIMIT: Max $10 equivalent
+      if (rew > 10) {
+        const Swal = (await import('sweetalert2')).default;
+        Swal.fire({
+          title: 'Beta Limit Exceeded',
+          text: 'During the beta phase, the maximum bounty reward is limited to 10 ' + tok + ' (approx $10). Please reduce the reward amount.',
+          icon: 'warning',
+          background: '#0a0a0f',
+          color: '#ffb800',
+          confirmButtonColor: '#ff3366',
+          customClass: { popup: 'cyber-border', confirmButton: 'cyber-btn-primary' }
+        });
+        return;
+      }
+
       try {
         let transactionHash = "mock-tx-hash";
-        const Swal = (await import('sweetalert2')).default;
 
         try {
           const { solanaBountyService } = await import('@/services/solana-bounty');
@@ -830,7 +844,6 @@ export class PanelLayoutManager implements AppModule {
           (this.ctx.panels.bounties as any).updateBounties(this.ctx.activeBounties);
         }
 
-        const Swal = (await import('sweetalert2')).default;
         Swal.fire({
           toast: true,
           position: 'top-end',
@@ -905,73 +918,6 @@ export class PanelLayoutManager implements AppModule {
     }
   }
 
-  private async executeBountyApproval(bountyId: string, agentAddress: string, reward: string, contractId?: number) {
-    const Swal = (await import('sweetalert2')).default;
-
-    if (!agentAddress) {
-      return Swal.fire({ icon: 'error', title: 'Invalid Agent Address' });
-    }
-
-    try {
-      if ((window as any).ethereum) {
-        const provider = new BrowserProvider((window as any).ethereum);
-        const signer = await provider.getSigner();
-        const escrowContract = new Contract(ESCROW_ADDRESS, EscrowArtifact.abi, signer);
-
-        Swal.fire({
-          title: 'Approving Payout',
-          text: `Disbursing ${reward} WARSCAN to ${agentAddress.substring(0, 8)}...`,
-          allowOutsideClick: false,
-          didOpen: () => { Swal.showLoading(); }
-        });
-
-        // Use the dynamic contractId (default to 0 for legacy/first test)
-        const idToApprove = contractId !== undefined ? contractId : 0;
-        const tx = await (escrowContract as any).approveWork(idToApprove, agentAddress);
-        await tx.wait();
-      } else {
-        const signed = await BankrWidget.promptSignature(parseFloat(reward), 'Approve Analyst Report Payout');
-        if (!signed) throw new Error("Approval Rejected");
-      }
-
-      // Update UI State
-      if (this.ctx.activeBounties) {
-        const target = this.ctx.activeBounties.find(b => b.id === bountyId);
-        if (target) {
-          target.status = 'completed';
-          target.completedAt = new Date().toISOString();
-          if (this.ctx.panels.bounties && 'updateBounties' in this.ctx.panels.bounties) {
-            (this.ctx.panels.bounties as any).updateBounties([...this.ctx.activeBounties]);
-          }
-        }
-      }
-
-      Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'success',
-        title: 'Reward Disbursed',
-        text: 'Funds sent to agent.',
-        showConfirmButton: false,
-        timer: 3000,
-        background: '#00ff66',
-        color: '#000'
-      });
-
-    } catch (error: any) {
-      Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'error',
-        title: 'Approval Failed',
-        text: error.message,
-        showConfirmButton: false,
-        timer: 3000,
-        background: '#333',
-        color: '#fff'
-      });
-    }
-  }
 
   private applyTimeRangeFilterToNewsPanels(): void {
     Object.entries(this.ctx.newsByCategory).forEach(([category, items]) => {

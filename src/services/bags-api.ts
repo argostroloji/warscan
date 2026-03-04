@@ -183,12 +183,14 @@ export class BagsApiService {
      */
     async getLifetimeFees(tokenMint: string): Promise<string | null> {
         try {
+            console.log(`[BagsAPI] Fetching lifetime fees for ${tokenMint}`);
             const res = await fetch(
                 `${BAGS_API_BASE}/token-launch/lifetime-fees?tokenMint=${tokenMint}`,
                 { headers: this.headers, signal: AbortSignal.timeout(8000) }
             );
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
+            console.log(`[BagsAPI] Fees response:`, data);
             return data.success ? (data.response || '0') : null;
         } catch (err) {
             console.warn('[BagsAPI] Failed to fetch lifetime fees', err);
@@ -201,12 +203,14 @@ export class BagsApiService {
      */
     async getTokenCreators(tokenMint: string): Promise<BagsCreator[]> {
         try {
+            console.log(`[BagsAPI] Fetching creators for ${tokenMint}`);
             const res = await fetch(
                 `${BAGS_API_BASE}/token-launch/creator/v3?tokenMint=${tokenMint}`,
                 { headers: this.headers, signal: AbortSignal.timeout(8000) }
             );
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
+            console.log(`[BagsAPI] Creators response:`, data);
             return data.success ? (data.response || []) : [];
         } catch (err) {
             console.warn('[BagsAPI] Failed to fetch creators', err);
@@ -219,12 +223,14 @@ export class BagsApiService {
      */
     async getClaimStats(tokenMint: string): Promise<BagsClaimStat[]> {
         try {
+            console.log(`[BagsAPI] Fetching claim stats for ${tokenMint}`);
             const res = await fetch(
                 `${BAGS_API_BASE}/token-launch/claim-stats?tokenMint=${tokenMint}`,
                 { headers: this.headers, signal: AbortSignal.timeout(8000) }
             );
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
+            console.log(`[BagsAPI] Claim stats response:`, data);
             return data.success ? (data.response || []) : [];
         } catch (err) {
             console.warn('[BagsAPI] Failed to fetch claim stats', err);
