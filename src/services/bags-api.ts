@@ -200,6 +200,56 @@ export class BagsApiService {
                 price: 0.0015
             },
             {
+                mint: '6XACVQwUPZdya5UwTcatUbmWbJwuYC6BRSwSX79Gpump',
+                name: 'NO NUCLEAR PLEASE',
+                symbol: 'NONUKE',
+                image: 'https://cdn.dexscreener.com/cms/images/G92akps_UhVVICXF?width=64&height=64&fit=crop&quality=95&format=auto',
+                createdAt: new Date().toISOString(),
+                url: BagsApiService.getTokenUrl('6XACVQwUPZdya5UwTcatUbmWbJwuYC6BRSwSX79Gpump'),
+                marketCap: 5200000,
+                volume24h: 850000
+            },
+            {
+                mint: '8DwDJ8mp3edVQw8pqbRX18LtNjircbY9b6ygPrnKpump',
+                name: 'James Howells',
+                symbol: 'JAMES',
+                image: 'https://cdn.dexscreener.com/cms/images/9KYsLo6vZfJ0G1Zg?width=64&height=64&fit=crop&quality=95&format=auto',
+                createdAt: new Date().toISOString(),
+                url: BagsApiService.getTokenUrl('8DwDJ8mp3edVQw8pqbRX18LtNjircbY9b6ygPrnKpump'),
+                marketCap: 1900000,
+                volume24h: 320000
+            },
+            {
+                mint: 'DVDmWyp9VyfkX5y5sw4RXhr93AhKvRFVZwLLVn9qR2Bd',
+                name: 'DVD Logo',
+                symbol: 'DVD',
+                image: 'https://cdn.dexscreener.com/cms/images/u_O9ycvnX6ssXvcb?width=64&height=64&fit=crop&quality=95&format=auto',
+                createdAt: new Date().toISOString(),
+                url: BagsApiService.getTokenUrl('DVDmWyp9VyfkX5y5sw4RXhr93AhKvRFVZwLLVn9qR2Bd'),
+                marketCap: 4500000,
+                volume24h: 600000
+            },
+            {
+                mint: 'Hrz6hE6fyzv4r3kMMjbFsqdJMz7n7VfjbKEvrC7kpump',
+                name: 'Nostalgic Game',
+                symbol: 'NGAME',
+                image: 'https://cdn.dexscreener.com/cms/images/iZ8Ib_-hfguvO0ZP?width=64&height=64&fit=crop&quality=95&format=auto',
+                createdAt: new Date().toISOString(),
+                url: BagsApiService.getTokenUrl('Hrz6hE6fyzv4r3kMMjbFsqdJMz7n7VfjbKEvrC7kpump'),
+                marketCap: 2100000,
+                volume24h: 180000
+            },
+            {
+                mint: 'EtmbZtSKmVTgtyWhY1DhVACihKoFaVN3j6j5xvqwpump',
+                name: 'Control Sentinel',
+                symbol: 'CTRL',
+                image: 'https://cdn.dexscreener.com/cms/images/C-xDpTyK6vbBDDSC?width=64&height=64&fit=crop&quality=95&format=auto',
+                createdAt: new Date().toISOString(),
+                url: BagsApiService.getTokenUrl('EtmbZtSKmVTgtyWhY1DhVACihKoFaVN3j6j5xvqwpump'),
+                marketCap: 3800000,
+                volume24h: 420000
+            },
+            {
                 mint: 'So11111111111111111111111111111111111111112',
                 name: 'Wrapped SOL',
                 symbol: 'SOL',
